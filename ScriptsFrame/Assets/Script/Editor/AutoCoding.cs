@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /// <summary>自动编码</summary>
 public class AutoCoding : Editor
 {
-    [MenuItem("GameObject/UI/一键注册 _%#_ Q")]
+    [MenuItem("GameObject/Tool/一键注册 _%#_ Q",false,-1)]//设置-1可以在最上一级显示
     public static void Coding()
     {
         GameObject select = Selection.activeGameObject;
@@ -29,8 +29,8 @@ public class AutoCoding : Editor
             return;
         }
 
-        if (IsExistSameName(baseUI.transform, select.transform))
-            return;
+        //if (IsExistSameName(baseUI.transform, select.transform))
+        //    return;
 
         GetFile(baseUI.GetType().Name, rImg, img, btn, select.name, GetParentPath(select.transform) + select.name);
     }

@@ -9,6 +9,8 @@ namespace UICore
     {
         NullUI,
         MainUI,
+        GameAUI,
+        GameBUI
     }
 
     public enum EMessageType
@@ -25,6 +27,8 @@ namespace UICore
         public static Dictionary<EUiId, string> dicPath = new Dictionary<EUiId, string>
         {
             { EUiId.MainUI,"UIPrefab/"+"MainUI"},
+            { EUiId.GameAUI,"UIPrefab/"+"GameAUI"},
+            { EUiId.GameBUI,"UIPrefab/"+"GameBUI"},
         };
 
         public static Dictionary<int, string> gameDic = new Dictionary<int, string>

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using CommandTerminal;
 
 public enum MusicType
 {
@@ -20,6 +21,7 @@ public enum SoundType
     SoundFx,
 }
 
+[RequireComponent(typeof(Terminal))]
 public class GameManager : MonoBehaviour
 {
     public Dictionary<MusicType, string> dic = new Dictionary<MusicType, string>

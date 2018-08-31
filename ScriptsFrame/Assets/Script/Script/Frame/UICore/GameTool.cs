@@ -278,6 +278,138 @@ public static class GameTool
 }
 #endregion
 
+#region 数学
+public class MathHelpr
+{
+    /// <summary>求一条线上某一x值对应的y值</summary>
+    public static float GetYByStartEndPointAndX(Vector2 startPoint, Vector2 endPoint, float x)
+    {
+        //斜率无穷的情况，需要做下调整
+        if (startPoint.x == endPoint.x)
+            startPoint.x -= 0.00001f;
+        float y;
+        y = startPoint.y + (endPoint.y - startPoint.y) / (endPoint.x - startPoint.x) * (x - startPoint.x);
+        return y;
+    }
+
+    /// <summary>求两个角度之间的夹角</summary>
+    public static int AngleDistance(int d1, int d2)
+    {
+        d1 = d1 % 360;
+        d2 = d2 % 360;
+        int val = d1 - d2;
+        val = val < 0 ? -val : val;
+        if (val > 180) val = 360 - val;
+        return val;
+    }
+
+    /// <summary>获取欧拉角</summary>
+    public static ushort GetEulerY(ushort direct)
+    {
+        int EulerY = (90 - direct);
+        if (EulerY < 0) EulerY += 360;
+        return (ushort)EulerY;
+    }
+
+    /// <summary>欧拉角获取角度</summary>
+    public static ushort GetDirectByEulerY(float eulerY)
+    {
+        eulerY = 90 - eulerY;
+        if (eulerY < 0) eulerY += 360;
+        return (ushort)eulerY;
+    }
+
+    /// <summary>旋转一个2D的点</summary>
+    public static Vector3 RotationPosition2D(Vector3 pos, float rad)
+    {
+        float x = pos.x;
+        float z = pos.z;
+        pos.x = x * Mathf.Cos(rad) - z * Mathf.Sin(rad);
+        pos.z = x * Mathf.Sin(rad) + z * Mathf.Cos(rad);
+        return pos;
+    }
+
+    /// <summary>求两个角度之间的夹角</summary>
+    public static float AngleDistance(float d1, float d2)
+    {
+        d1 = Mathf.Repeat(d1, 360);
+        d2 = Mathf.Repeat(d2, 360);
+        float val = Mathf.Abs(d1 - d2);
+        if (val > 180) val = 360 - val;
+        return val;
+    }
+
+    /// <summary>线段跟矩形的交点 </summary>
+    public static bool CaluIntrRectPoint(Vector2 a, Vector2 b, Vector4 rect, ref Vector2 pos)
+    {
+        // 2 3
+        // 1 4  
+        //坐标系
+        //↑y
+        //|
+        //|
+        //|-------->x
+        //
+        Vector2 s1 = new Vector2(rect.x, rect.y);
+        Vector2 s2 = new Vector2(rect.x, rect.w);
+        Vector2 s3 = new Vector2(rect.z, rect.w);
+        Vector2 s4 = new Vector2(rect.z, rect.x);
+
+        if (MathHelpr.CaluIntrPoint(a, b, s1, s2, ref pos))
+            return true;
+        if (MathHelpr.CaluIntrPoint(a, b, s3, s4, ref pos))
+            return true;
+        if (MathHelpr.CaluIntrPoint(a, b, s2, s3, ref pos))
+            return true;
+        if (MathHelpr.CaluIntrPoint(a, b, s1, s4, ref pos))
+            return true;
+        return false;
+    }
+
+    /// <summary>线段是否相交 相交的话求两线段的交点</summary>
+    public static bool CaluIntrPoint(Vector2 a, Vector2 b, Vector2 c, Vector2 d, ref Vector2 p)
+    {
+        // 三角形abc 面积的2倍
+        float area_abc = (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
+        // 三角形abd 面积的2倍
+        float area_abd = (a.x - d.x) * (b.y - d.y) - (a.y - d.y) * (b.x - d.x);
+        // 面积符号相同则两点在线段同侧,不相交 (对点在线段上的情况,本例当作不相交处理);  
+        if (area_abc * area_abd >= 0)
+            return false;
+
+        // 三角形cda 面积的2倍
+        var area_cda = (c.x - a.x) * (d.y - a.y) - (c.y - a.y) * (d.x - a.x);
+        // 三角形cdb 面积的2倍
+        // 注意: 这里有一个小优化.不需要再用公式计算面积,而是通过已知的三个面积加减得出.  
+        var area_cdb = area_cda + area_abc - area_abd;
+        if (area_cda * area_cdb >= 0)
+            return false;
+
+        //计算交点坐标  
+        float t = area_cda / (area_abd - area_abc);
+        float dx = t * (b.x - a.x),
+            dy = t * (b.y - a.y);
+
+        p.x = a.x + dx;
+        p.y = a.y + dy;
+        return true;
+    }
+
+    /// <summary>检测两个球体碰撞</summary>
+    public static bool CheckCircleCollider(float x1, float y1, float z1, float r1,
+        float x2, float y2, float z2, float r2)
+    {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float dz = z2 - z1;
+        float disSqua = (dx * dx) + (dy * dy) + (dz * dz);
+        float rSqua = (r1 + r2) * (r1 + r2);
+        return disSqua < rSqua;
+    }
+}
+
+#endregion
+
 #region Linq拓展
 public static class LinqUtil
 {
@@ -339,13 +471,29 @@ public static class LinqUtil
         return arrary.Where(predicate).ToArray();
     }
 
-    /// <summary>比较数组并返回相同元素</summary>
+    /*------------比较差异  与两个数组或者List的前后顺序有关
+     *            比较的是前一个中不同于后一个的元素，
+     *            而不是把所有元素都获取出来-----------------------------------*/
+
+    /// <summary>比较数组并返回相同元素List</summary>
+    public static List<T>CustomIntersect<T>(List<T> list1, List<T> list2)
+    {
+        return list1.Intersect(list2).ToList();
+    }
+
+    /// <summary>比较数组并返回相同元素Arrary</summary>
     public static IEnumerable<T> CustomIntersect<T>(T[] array1, T[] array2)
     {
         return array1.Intersect(array2).ToArray();
     }
 
-    /// <summary>比较数组并返回差异元素</summary>
+    /// <summary>比较数组并返回差异元素List</summary>
+    public static List<T> CustomExcept<T>(List<T> list1, List<T> list2)
+    {
+        return list1.Except(list2).ToList();
+    }
+
+    /// <summary>比较数组并返回差异元素Arrary</summary>
     public static IEnumerable<T> CustomExcept<T>(T[] array1, T[] array2)
     {
         return array1.Except(array2).ToArray();
@@ -357,10 +505,89 @@ public static class LinqUtil
         return array1.Where(x => !array2.Contains(x)).ToArray();
     }
 
+    /// <summary>array_Skip往后选择指定位数的元素   Take从头开始选取固定数量的元素</summary>
+    public static T[] SubArray<T>(this T[] array, int startIndex, int length = -1)
+    {
+        if (length == -1)
+            return array.Skip(startIndex).ToArray();
+
+        return array.Skip(startIndex).Take(length).ToArray();
+    }
+
     /// <summary>比较数组每一个值是否相等</summary>
     public static bool IsArrayEqual<T>(T[] array1, T[] array2)
     {
         return Enumerable.SequenceEqual(array1, array2);
+    }
+
+    #region 随机数
+    /// <summary>获取array随机值</summary>
+    public static T GetRandom<T>(this T[] array)
+    {
+        if (array == null || array.Length == 0)
+            return default(T);
+
+        return array[UnityEngine.Random.Range(0, array.Length)];
+    }
+
+    /// <summary>获取List随机值</summary>
+    public static T GetRandom<T>(this List<T> list)
+    {
+        if (list == null || list.Count == 0)
+            return default(T);
+
+        return list[UnityEngine.Random.Range(0, list.Count)];
+    }
+
+    /// <summary>从一组数组中随机选择一个数，随机概率</summary>
+    public static float GetRandom(float[] probs)
+    {
+        float total = 0;
+        foreach (float elem in probs)
+            total += elem;
+
+        float randomPoint = UnityEngine.Random.value * total;
+        for (int i = 0; i < probs.Length; i++)
+        {
+            if (randomPoint < probs[i])
+                return i;
+            else
+                randomPoint -= probs[i];
+        }
+        return probs.Length - 1;
+    }
+
+    /// <summary>将一组数组整体随机打乱，洗牌</summary>
+    public static int[] GetRandomArray(int[] cards)
+    {
+        for (int i = 0; i < cards.Length; i++)
+        {
+            int temp = cards[i];
+            int randomIndex = UnityEngine.Random.Range(0, cards.Length);
+            cards[i] = cards[randomIndex];
+            cards[randomIndex] = temp;
+        }
+        return cards;
+    }
+
+    /// <summary>从一组数组中随机选择N个数作为新的数组</summary>
+
+    public static T[] GetRandomArray<T>(int numRequired, T[] spawnPoints)
+    {
+        T[] result = new T[numRequired];
+        int numToChoose = numRequired;
+        for (int numLeft = spawnPoints.Length; numLeft > 0; numLeft--)
+        {
+            float prob = ((float)numToChoose) / ((float)numLeft);
+            if (UnityEngine.Random.value < prob)
+            {
+                numToChoose--;
+                result[numToChoose] = spawnPoints[numLeft - 1];
+                if (numToChoose == 0)
+                    break;
+            }
+        }
+        return result;
     }
 
     /// <summary>获取不相等随机数,HashSet</summary>
@@ -392,35 +619,7 @@ public static class LinqUtil
             setList.Add(resultArray[i]);
         }
     }
-
-    /// <summary>获取array随机值</summary>
-    public static T GetRandom<T>(this T[] array)
-    {
-        if (array == null || array.Length == 0)
-            return default(T);
-
-        return array[UnityEngine.Random.Range(0, array.Length)];
-    }
-
-    /// <summary>array_Skip往后选择指定位数的元素   Take从头开始选取固定数量的元素</summary>
-    public static T[] SubArray<T>(this T[] array, int startIndex, int length = -1)
-    {
-        if (length == -1)
-            return array.Skip(startIndex).ToArray();
-
-        return array.Skip(startIndex).Take(length).ToArray();
-    }
-
-    /// <summary>获取List随机值</summary>
-    public static T GetRandom<T>(this List<T> list)
-    {
-        if (list == null || list.Count == 0)
-            return default(T);
-
-        return list[UnityEngine.Random.Range(0, list.Count)];
-    }
-
-
+    #endregion
 }
 
 //alist = list.Distinct(new ListComparer<int>((p1, p2) => p1 == p2)).ToList();
@@ -1145,6 +1344,111 @@ public static class MaskableGraphicExtension
         TransformUtil.SetSizeDelta(graphic.rectTransform, sizeDelta);
         return graphic;
     }
+
+    /// <summary>
+    /// 获取rect屏幕坐标
+    /// </summary>
+    public static MaskableGraphic GetScreenPos(this MaskableGraphic graphic, out Vector3 screenPosition, Canvas canvas = null, Camera camera = null)
+    {
+        RectTransform rect = graphic.rectTransform;
+        graphic.rectTransform.GetScreenPos(out screenPosition, canvas, camera);
+        return graphic;
+    }
+
+    public static RectTransform GetScreenPos(this RectTransform rect, out Vector3 screenPosition, Canvas canvas = null, Camera camera = null)
+    {
+        screenPosition = Vector3.zero;
+        if (rect == null)
+        {
+            Debug.LogError("rect is Null");
+            return null;
+        }
+        if (canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            screenPosition = rect.position;
+        else
+            screenPosition = camera.WorldToScreenPoint(rect.position);
+        return rect;
+    }
+
+    /// <summary>
+    /// 获取rect四个角屏幕坐标
+    /// </summary>
+    public static MaskableGraphic GetSpaceCorners(this MaskableGraphic graphic, out Vector3[] corners, Canvas canvas = null, Camera camera = null)
+    {
+        corners = new Vector3[4];
+        for (int i = 0; i < corners.Length; i++)
+            corners[i] = Vector3.zero;
+
+        if (graphic == null)
+        {
+            Debug.LogError("graphic is Null");
+            return null;
+        }
+        RectTransform rect = graphic.rectTransform;
+        if (camera == null)
+            camera = Camera.main;
+        rect.GetWorldCorners(corners);
+        if (canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay) { }
+        else
+        {
+            for (int i = 0; i < corners.Length; i++)
+                corners[i] = camera.WorldToScreenPoint(corners[i]);
+        }
+        return graphic;
+    }
+
+    #region 获取鼠标点中的图片像素点的颜色
+    //https://blog.csdn.net/hany3000/article/details/46385005
+    //image.GetRectPixelColor(out pixelColor);
+    //_resultImage.color = pixelColor;
+
+    public static MaskableGraphic GetRectPixelColor(this MaskableGraphic graphic,out Color color, Canvas canvas = null, Camera camera = null)
+    {
+        color = Color.black;
+        if (graphic == null)
+        {
+            Debug.LogError("graphic is Null");
+            return null;
+        }
+        color = GetColor(Input.mousePosition, graphic, canvas, camera);
+        return graphic;
+    }
+
+    private static Color GetColor(Vector3 mousePos, MaskableGraphic graphic, Canvas canvas = null, Camera camera = null)
+    {
+        Image image = graphic as Image;
+        if (RectContainsScreenPoint(mousePos, canvas, graphic.rectTransform, Camera.main))
+        {
+            var spaceRect = GetSpaceRect(canvas, graphic.rectTransform, Camera.main);
+            var localPos = Input.mousePosition - new Vector3(spaceRect.x, spaceRect.y);
+            var realPos = new Vector2(localPos.x, localPos.y);
+            var imageToTextre = new Vector2(image.sprite.textureRect.width / spaceRect.width,
+                image.sprite.textureRect.height / spaceRect.height);
+            return image.sprite.texture.GetPixel((int)(realPos.x * imageToTextre.x), (int)(realPos.y * imageToTextre.y));
+        }
+        return Color.black;
+    }
+
+    public static bool RectContainsScreenPoint(Vector3 point, Canvas canvas, RectTransform rect, Camera camera)
+    {
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay) 
+            return RectTransformUtility.RectangleContainsScreenPoint(rect, point, camera);
+        return GetSpaceRect(canvas, rect, camera).Contains(point);
+    }
+
+    public static Rect GetSpaceRect(Canvas canvas, RectTransform rect, Camera camera)
+    {
+        Rect spaceRect = rect.rect;
+        Vector3 spacePos;
+        GetScreenPos(rect, out spacePos,canvas, camera);
+        //lossyScale
+        spaceRect.x = spaceRect.x * rect.lossyScale.x + spacePos.x;
+        spaceRect.y = spaceRect.y * rect.lossyScale.y + spacePos.y;
+        spaceRect.width = spaceRect.width * rect.lossyScale.x;
+        spaceRect.height = spaceRect.height * rect.lossyScale.y;
+        return spaceRect;
+    }
+    #endregion
 }
 #endregion
 
@@ -1202,6 +1506,13 @@ public static class ActionExtension
             }
         }
     }
+}
+#endregion
+
+#region RectTransform
+public static class RectTransformUtil
+{
+    
 }
 #endregion
 

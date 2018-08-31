@@ -55,7 +55,7 @@ public class StateTime : MonoBehaviour
             currentTime = 0;
             if (UIManager.Instance.CurrentId != EUiId.MainUI)
             {
-                UIManager.Instance.ShowUI(EUiId.MainUI,UIManager.Instance.CurrentId);
+                UIManager.Instance.ShowUI(EUiId.MainUI);
             }
         }
     }

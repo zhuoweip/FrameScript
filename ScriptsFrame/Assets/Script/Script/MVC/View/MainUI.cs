@@ -8,12 +8,14 @@ using SwanEngine.Events;
 
 public class MainUI : BaseUI
 {
-    private Button gameBtn;
-
     //初始化界面元素
+private RawImage r3rImg;
+private Button r3btn;
     protected override void InitUiOnAwake()
     {
-        gameBtn = GameTool.GetTheChildComponent<Button>(gameObject, "gameBtn");
+        base.InitUiOnAwake();
+r3rImg = GameTool.GetTheChildComponent<RawImage>(gameObject,"r3");
+r3btn = GameTool.GetTheChildComponent<Button>(gameObject,"r3");
     }
 
     //初始化界面数据
@@ -25,11 +27,10 @@ public class MainUI : BaseUI
     protected override void RegistBtns()
     {
         base.RegistBtns();
-        gameBtn.onClick.AddListener(() => { PlayGame(); });
+r3btn.onClick.AddListener(() => { UIManager.Instance.ShowUI(EUiId.GameAUI); });
     }
 
     private void PlayGame()
     {
-        //UIManager.Instance.ShowUI(EUiId.GameADialogUI,EUiId.MainUI);
     }
 }

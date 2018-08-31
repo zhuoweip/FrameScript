@@ -2,12 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Reflection;
 
 namespace UICore
 {
     public class UIManager :UnitySingleton<UIManager>
     {
-
         //缓存所有打开过的窗体
         private Dictionary<EUiId, BaseUI> dicAllUI;
         //缓存正在显示的窗体
@@ -30,7 +30,7 @@ namespace UICore
         void Awake()
         {
             canvas = this.transform.parent;
-            uiRoot = GameObject.Find("UiRoot").transform;
+            uiRoot = GameObject.Find("UIRoot").transform;
             dicAllUI = new Dictionary<EUiId, BaseUI>();
             dicShowUI = new Dictionary<EUiId, BaseUI>();
         }
@@ -56,40 +56,44 @@ namespace UICore
             ShowUI(EUiId.MainUI);
         }
 
-        public void AddUI(EUiId lastUiId,Transform parent, string EventTypeName = null, params object[] param)
+        public void AddUI(EUiId currenrId, string EventTypeName = null, params object[] param)
         {
-            BaseUI baseUI = JudgeShowUI(lastUiId, parent);
+            MethodBase method = new System.Diagnostics.StackTrace().GetFrame(1).GetMethod();
+            string className = method.ReflectedType.FullName;
+            Transform parent = GameObject.Find(className + "(Clone)").transform;//此处可以直接传进来一个transform
+
+            BaseUI baseUI = JudgeShowUI(currenrId, parent);
             if (baseUI != null)
             {
                 if (EventTypeName != null)
                     SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
 
-                CurrentId = lastUiId;
+                CurrentId = currenrId;
                 baseUI.ShowUI();
             }
         }
 
-        public void ShowUI(EUiId lastUiId, EUiId currentUiId = EUiId.NullUI,string EventTypeName = null, params object[] param)
+        public void ShowUI(EUiId nextUiId, string EventTypeName = null, params object[] param)
         {
             GameManager.Instance.PlayAudio();
-            BaseUI currentUI = GetBaseUI(currentUiId);
+            BaseUI currentUI = GetBaseUI(CurrentId);
             if (currentUI != null)
             {
                 Debug.Log(currentUI.gameObject.name);
                 Destroy(currentUI.gameObject);
             }
-            if (dicShowUI.ContainsKey(currentUiId))
-                dicShowUI.Remove(currentUiId);
-            if (dicAllUI.ContainsKey(currentUiId))
-                dicAllUI.Remove(currentUiId);
+            if (dicShowUI.ContainsKey(CurrentId))
+                dicShowUI.Remove(CurrentId);
+            if (dicAllUI.ContainsKey(CurrentId))
+                dicAllUI.Remove(CurrentId);
             
-            BaseUI baseUI = JudgeShowUI(lastUiId);
+            BaseUI baseUI = JudgeShowUI(nextUiId);
             if (baseUI != null)
             {
                 if (EventTypeName != null)
                     SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
 
-                CurrentId = lastUiId;
+                CurrentId = nextUiId;
                 baseUI.ShowUI();
             }
         }
@@ -263,5 +267,4 @@ namespace UICore
             }
         }
     }
-
 }
