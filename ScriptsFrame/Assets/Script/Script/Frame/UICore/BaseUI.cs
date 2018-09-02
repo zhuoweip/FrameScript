@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,11 @@ namespace UICore
         public EUiId UiId { get { return uiId; } }
 
         public EUiId BeforeUiId { get { return beforeUiId; } set { beforeUiId = value; } }
+
+        public BaseUI()
+        {
+            uiId = (EUiId)Enum.Parse(typeof(EUiId), this.GetType().Name);
+        }
 
         protected override void Awake()
         {

@@ -1,13 +1,12 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using System;
+using System.Reflection;
+using UnityEngine;
 
 namespace UICore
 {
     public class UIManager :UnitySingleton<UIManager>
     {
-
         //缓存所有打开过的窗体
         private Dictionary<EUiId, BaseUI> dicAllUI;
         //缓存正在显示的窗体
@@ -24,15 +23,32 @@ namespace UICore
         //当前ID
         [HideInInspector]
         public EUiId CurrentId = EUiId.NullUI;
-        //当前窗体
-        private BaseUI CurrnetUI = null;
+
+        private Type[] baseUiSubTypes;
+
+        //获得所有BaseUI的子类
+        private void InitGetBaseUiSubType()
+        {
+            baseUiSubTypes = (Type[])LinqUtil.CustomWhere(Assembly.GetExecutingAssembly().GetTypes(),t => t.IsSubclassOf(typeof(BaseUI)));
+        }
+
+        private Type GetTypeByUiId(EUiId eUiId)
+        {
+            foreach (var item in baseUiSubTypes)
+            {
+                if (item.Name == Enum.GetName(eUiId.GetType(), eUiId))
+                    return item;
+            }
+            return null;
+        }
 
         void Awake()
         {
             canvas = this.transform.parent;
-            uiRoot = GameObject.Find("UiRoot").transform;
+            uiRoot = GameObject.Find("UIRoot").transform;
             dicAllUI = new Dictionary<EUiId, BaseUI>();
             dicShowUI = new Dictionary<EUiId, BaseUI>();
+            InitGetBaseUiSubType();
         }
 
         private void Start()
@@ -56,69 +72,56 @@ namespace UICore
             ShowUI(EUiId.MainUI);
         }
 
-        public void AddUI(EUiId lastUiId,Transform parent, string EventTypeName = null, params object[] param)
-        {
-            BaseUI baseUI = JudgeShowUI(lastUiId, parent);
-            if (baseUI != null)
-            {
-                if (EventTypeName != null)
-                    SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
-
-                CurrentId = lastUiId;
-                baseUI.ShowUI();
-            }
-        }
-
-        public void ShowUI(EUiId lastUiId, EUiId currentUiId = EUiId.NullUI,string EventTypeName = null, params object[] param)
+        public void ShowUI(EUiId nextUiId, Transform parent = null, string EventTypeName = null, params object[] param)
         {
             GameManager.Instance.PlayAudio();
-            BaseUI currentUI = GetBaseUI(currentUiId);
-            if (currentUI != null)
+            BaseUI currentUI = GetBaseUI(CurrentId);
+
+            if (currentUI != null && parent == null)
             {
-                Debug.Log(currentUI.gameObject.name);
-                Destroy(currentUI.gameObject);
+                //父级baseUI
+                EUiId parentUiId = EUiId.NullUI;
+                BaseUI parentUI = currentUI.GetComponentInParentNotInCludSelf<BaseUI>();
+                if (parentUI != null)
+                    parentUiId = parentUI.UiId;
+
+                BaseUI[] childUI = currentUI.GetComponentsInFirstHierarchyChildren<BaseUI>(true);
+
+                //如果父级有baseUI并且直接打开的是别的UI的话就删除
+                if (parentUiId != EUiId.NullUI && nextUiId != parentUiId)
+                    Destroy(parentUI.gameObject);
+                else
+                    Destroy(currentUI.gameObject);
+
+                RemoveUiId(CurrentId);
+                if (childUI != null)
+                {
+                    for (int i = 0; i < childUI.Length; i++)
+                    {
+                        EUiId chiidUiId = childUI[i].UiId;
+                        RemoveUiId(chiidUiId);
+                    }
+                }
+                if (parentUiId != EUiId.NullUI && nextUiId != parentUiId)
+                    RemoveUiId(parentUiId);
             }
-            if (dicShowUI.ContainsKey(currentUiId))
-                dicShowUI.Remove(currentUiId);
-            if (dicAllUI.ContainsKey(currentUiId))
-                dicAllUI.Remove(currentUiId);
-            
-            BaseUI baseUI = JudgeShowUI(lastUiId);
+
+            BaseUI baseUI = JudgeShowUI(nextUiId, parent);
             if (baseUI != null)
             {
                 if (EventTypeName != null)
                     SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
-
-                CurrentId = lastUiId;
+                CurrentId = nextUiId;
                 baseUI.ShowUI();
             }
         }
 
-
-        //显示窗体的方法（isSaveBeforeUiId代表是否要保存上一个切换过来的窗体ID,一般情况下是需要保存的，除了窗体的反向切换）
-        public void ShowUI(EUiId UiId,bool isSaveBeforeUiId)//bool isSaveBeforeUiId=true
+        private void RemoveUiId(EUiId uiId)
         {
-            if (UiId==EUiId.NullUI)
-            {
-                UiId = EUiId.MainUI;
-            }
-            //1、判断窗体是否有显示过
-            //如果有显示过，把窗体再次显示出来，隐藏当前窗体
-            //从未显示过，先把窗体动态加载出来，然后再显示，接着隐藏当前窗体
-            BaseUI baseUI = JudgeShowUI(UiId);
-            if (baseUI!=null)
-            {
-                baseUI.ShowUI();
-                if (isSaveBeforeUiId)
-                {
-                    baseUI.BeforeUiId = beforeHideUiId;
-                }
-            }
-        }
-        //反向切换
-        public void ReturnUI(EUiId beforeUiId)
-        {
-            ShowUI(beforeUiId,false);
+            if (dicShowUI.ContainsKey(uiId))
+                dicShowUI.Remove(uiId);
+            if (dicAllUI.ContainsKey(uiId))
+                dicAllUI.Remove(uiId);
         }
 
         public BaseUI JudgeShowUI(EUiId uiId,Transform parent)
@@ -140,14 +143,14 @@ namespace UICore
                         baseUI = willShowUI.GetComponent<BaseUI>();
                         if (baseUI == null)
                         {
-                            Type type = GameDefine.GetUIScriptType(uiId);
+                            Type type = GetTypeByUiId(uiId);
                             baseUI = willShowUI.AddComponent(type) as BaseUI;
                         }
                         //把生成出来的窗体放在UiRoot下面
-                        GameTool.AddChildToParent(parent, willShowUI.transform);
+                        GameTool.AddChildToParent(parent == null ? uiRoot : parent, willShowUI.transform);
                         willShowUI.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
                         willShowUI.GetComponent<RectTransform>().anchoredPosition3D = Vector3.zero;
-
+                        dicAllUI.Add(uiId, baseUI);
                     }
                     else
                     {
@@ -160,62 +163,31 @@ namespace UICore
                     Debug.LogError("GameDefine下面没有窗体ID为" + uiId + "的加载路径");
                 }
             }
+            UpdateDicShowUI(baseUI, !parent);
             return baseUI;
         }
 
-
-        public BaseUI JudgeShowUI(EUiId uiId)
+        private void UpdateDicShowUI(BaseUI baseUI,bool isHideAllUI = true)
         {
-            if (dicShowUI.ContainsKey(uiId))
-            {
-                return null;
-            }
-            BaseUI baseUI = GetBaseUI(uiId);
-            if (baseUI==null)//说明将要显示的窗体从未显示过
-            {
-                //去动态加载出来
-                if (GameDefine.dicPath.ContainsKey(uiId))
-                {
-                    //有窗体的加载路径，就去加载
-                    string path = GameDefine.dicPath[uiId];
-                    GameObject theUI = Resources.Load<GameObject>(path);
-                    if (theUI!=null)
-                    {
-                        GameObject willShowUI = Instantiate(theUI);
-                        //判断显示出来的窗体上面是否有挂载UI脚本
-                        baseUI = willShowUI.GetComponent<BaseUI>();
-                        if (baseUI==null)//说明窗体上面没有挂载UI脚本
-                        {
-                            //自动挂载
-                            Type type = GameDefine.GetUIScriptType(uiId);
-                            baseUI = willShowUI.AddComponent(type) as BaseUI;
-                        }
-                        //把生成出来的窗体放在UiRoot下面
-                        GameTool.AddChildToParent(uiRoot, willShowUI.transform);
-                        willShowUI.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-                        willShowUI.GetComponent<RectTransform>().anchoredPosition3D = Vector3.zero;
-                        dicAllUI.Add(uiId,baseUI);
-
-                    }
-                    else
-                    {
-                        Debug.LogError("在路径"+path+"下面找不到预制体"+ uiId+",请检查路径下面是否有该预制体");
-                    }
-
-                }
-                else
-                {
-                    Debug.LogError("GameDefine下面没有窗体ID为"+ uiId+"的加载路径");
-                }
-            }
-            UpdateDicShowUI(baseUI);
-            return baseUI;
-        }
-
-        private void UpdateDicShowUI(BaseUI baseUI)
-        {
-            HideAllUI();
+            if (isHideAllUI)
+                HideAllUI();
             dicShowUI.Add(baseUI.UiId,baseUI);
+        }
+
+        //隐藏所有窗体
+        public void HideAllUI()
+        {
+            if (dicShowUI.Count > 0)
+            {
+                foreach (var item in dicShowUI)
+                {
+                    //隐藏正在显示的窗体
+                    item.Value.HideUI(null);
+                    //缓存上一个窗体的ID
+                    beforeHideUiId = item.Key;
+                }
+                dicShowUI.Clear();
+            }
         }
 
         //判断窗体是否有显示过 
@@ -247,21 +219,5 @@ namespace UICore
             }
             dicShowUI.Remove(uiId);
         }
-        //隐藏所有窗体
-        public void HideAllUI()
-        {
-            if (dicShowUI.Count > 0)
-            {
-                foreach (KeyValuePair<EUiId, BaseUI> item in dicShowUI)
-                {
-                    //隐藏正在显示的窗体
-                    item.Value.HideUI(null);
-                    //缓存上一个窗体的ID
-                    beforeHideUiId = item.Key;
-                }
-                dicShowUI.Clear();
-            }
-        }
     }
-
 }
