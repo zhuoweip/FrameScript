@@ -14,6 +14,7 @@ namespace UICore
             #region TimeScale
             if (Input.GetKeyDown(KeyCode.F12)) { Time.timeScale = 50; }
             else if (Input.GetKeyUp(KeyCode.F12)) { Time.timeScale = 1; }
+            else if (Input.GetKeyDown(KeyCode.F11)){Time.timeScale = 0; }
             #endregion
         }
 
@@ -30,9 +31,9 @@ namespace UICore
 
         private void DragWindow()
         {
-            if (Input.GetKeyDown(KeyCode.F9) && windowsIndex == lastWindowIndex)
+            if (Input.GetKeyDown(KeyCode.F8) && windowsIndex == lastWindowIndex)
                 windowsIndex = 1 - lastWindowIndex;
-            else if (Input.GetKeyUp(KeyCode.F9) && windowsIndex != lastWindowIndex)
+            else if (Input.GetKeyUp(KeyCode.F8) && windowsIndex != lastWindowIndex)
                 lastWindowIndex = windowsIndex;
 
             if (windowsIndex == 0) return;
@@ -65,9 +66,9 @@ namespace UICore
         #region Debug输出
         private void DebugOnGUI()
         {
-            if (Input.GetKeyDown(KeyCode.F11) && logIndex == lastLogIndex)//加锁，不然会执行多次
+            if (Input.GetKeyDown(KeyCode.F9) && logIndex == lastLogIndex)//加锁，不然会执行多次
                 logIndex = 1 - logIndex;
-            else if (Input.GetKeyUp(KeyCode.F11) && logIndex != lastLogIndex)
+            else if (Input.GetKeyUp(KeyCode.F9) && logIndex != lastLogIndex)
                 lastLogIndex = logIndex;
 
             if (logIndex == 0) return;
