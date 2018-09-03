@@ -6,101 +6,84 @@ using System;
 using System.IO;
 using UICore;
 using UnityEngine.UI;
+using System.Reflection;
 
 /// <summary>自动编码</summary>
 public class AutoCoding : Editor
 {
-    [MenuItem("GameObject/Tool/一键注册 _%#_ Q",false,-1)]//设置-1可以在最上一级显示
+    [MenuItem("GameObject/Tool/一键注册 _%#_ Q", false, -1)]//设置-1可以在最上一级显示,其他位置直接按顺序数
     public static void Coding()
     {
         GameObject select = Selection.activeGameObject;
-        Component[] cps = select.GetComponents<Component>();//获取身上所有组件
 
-        RawImage rImg = GetCompoentByComponent<RawImage>(cps);
-        Image img = GetCompoentByComponent<Image>(cps);
-        Button btn = GetCompoentByComponent<Button>(cps);
+        RawImage rImg = select.GetComponent<RawImage>();
+        Image img = select.GetComponent<Image>();
+        Button btn = select.GetComponent<Button>();
 
-        MonoBehaviour[] alltypes = select.GetComponentsInParent<MonoBehaviour>();
-        MonoBehaviour baseUI = GetBaseUIType(alltypes);
-        ////Debug.Log(baseUI.GetType().Name);
-        if (baseUI == null)
+        Transform parent = null;
+        Type baseUI = GetBaseUIType(select.transform, out parent);
+
+        if (parent == null)
         {
             Debug.LogError("不存在BaseUI");
             return;
         }
-
-        //if (IsExistSameName(baseUI.transform, select.transform))
-        //    return;
-
-        GetFile(baseUI.GetType().Name, rImg, img, btn, select.name, GetParentPath(select.transform) + select.name);
+        else
+        {
+            if (IsExistSameName(parent, select.transform))
+                return;
+            GetFile(baseUI.Name, rImg, img, btn, select.name, GetParentPath(select.transform, parent));
+        }
     }
 
     /// <summary>是否已经存在相同名称,有则不注册</summary>
     private static bool IsExistSameName(Transform parent, Transform select)
     {
-        for (int i = 0; i < parent.childCount; i++)
+        Transform[] childTrans = (Transform[])LinqUtil.CustomWhere(parent.GetComponentsInChildren<Transform>(), 
+            x => x.name == select.name);
+        if (childTrans.Length> 1)
         {
-            if (parent.GetChild(i).name == select.name)//这里不能用Equal
-            {
-                Debug.LogError("存在相同名称物体");
-                return true;
-            }
-            IsExistSameName(parent.GetChild(i), select);//有的话找一轮寻找即结束
-            return false;
+            Debug.LogError("存在相同名称物体");
+            return true;
         }
         return false;
     }
 
-
-    /// <summary>获取身上特定组件</summary>
-    private static T GetCompoentByComponent<T>(Component[] cps) where T : Component
+    private static Type GetBaseUIType(Transform selectTrans,out Transform parent)
     {
-        if (cps == null)
-            return null;
-        foreach (var item in cps)
+        parent = null;
+        Transform[] parents = selectTrans.GetComponentsInParent<Transform>();
+        List<Tuple<string, Transform>> pList = new List<Tuple<string, Transform>>();
+        foreach (var item in parents)
         {
-            if (item.GetType() == typeof(T))
-                return item as T;
+            Tuple<string, Transform> tuple = new Tuple<string,Transform>(item.name,item);
+            pList.Add(tuple);
         }
-        return null;
-    }
-
-    /// <summary>获取父物体上面继承baseUI的类</summary>
-    private static MonoBehaviour GetBaseUIType(MonoBehaviour[] type)
-    {
-        foreach (var item in type)
+        Type[] types = Assembly.GetAssembly(typeof(BaseUI)).GetTypes();
+        foreach (var item in types)
         {
-            if (item.GetType().IsSubclassOf(typeof(BaseUI)))
+            Transform parentTrans = GetParent(pList, item.Name);
+            parent = parentTrans;
+            if (item.IsSubclassOf(typeof(BaseUI)) && parentTrans)
                 return item;
         }
         return null;
     }
 
-    private static void GetParentPath(Transform trans, List<string> list)
+    private static Transform GetParent(List<Tuple<string, Transform>> pList, string name)
     {
-        if (trans.parent != null && GetBaseUIType(trans.GetComponents<MonoBehaviour>()) == null)
+        foreach (var item in pList)
         {
-            list.Add(trans.parent.name);
-            GetParentPath(trans.parent, list);
+            if (item.item1.Contains(name))
+                return item.item2;
         }
+        return null;
     }
 
     /// <summary>获取父物体路径</summary>
-    private static string GetParentPath(Transform trans)
+    private static string GetParentPath(Transform trans, Transform parent = null)
     {
-        List<string> list = new List<string>();
-        GetParentPath(trans, list);
-        return GetAddPath(list);
-    }
-
-    /// <summary>拼接路径字符串</summary>
-    private static string GetAddPath(List<string> list)
-    {
-        string path = string.Empty;
-        list.RemoveAt(list.Count - 1);
-        for (int i = list.Count - 1; i >= 0; i--)
-            path += list[i] + "/";
-        return path;
+        return AnimationUtility.CalculateTransformPath(trans, parent);
     }
 
     /// <summary>找到Assets文件夹下该类</summary>

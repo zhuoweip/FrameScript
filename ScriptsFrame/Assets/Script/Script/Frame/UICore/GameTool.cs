@@ -11,14 +11,6 @@ using System.Collections;
 #region GameTool
 public static class GameTool
 {
-    /// <summary>给子物体添加父对象</summary>
-    public static void AddChildToParent(Transform parentTrans, Transform childTrans)
-    {
-        childTrans.parent = parentTrans;
-        childTrans.localPosition = Vector3.zero;
-        childTrans.localScale = Vector3.one;
-    }
-
     /// <summary>查找子物体的Transform</summary>
     public static Transform FindTheChild(GameObject goParent, string childName)
     {
@@ -421,6 +413,11 @@ public static class LinqUtil
     //static string[] GG = (string[])LinqUtil.CustomWhere(AA, x => x == "1").ToArray();
     //static bool FF = LinqUtil.IsArrayEqual(AA, BB);
     #endregion
+
+    public static List<T> ToList<T>(T[] array)
+    {
+        return array.ToList();
+    }
 
     /// <summary>List_Skip往后选择指定位数的元素   Take从头开始选取固定数量的元素</summary>
     public static List<T> SubArray<T>(this List<T> list, int startIndex, int length = -1)
@@ -1316,7 +1313,9 @@ public static class GameObjectExtension
 
     public static GameObject SetParent(this GameObject selfObj, Transform parent)
     {
-        GameTool.AddChildToParent(parent, selfObj.transform);
+        selfObj.transform.SetParent(parent);
+        SetScale(selfObj, Vector3.one);
+        SetLocalPos(selfObj, Vector3.zero);
         return selfObj;
     }
 }
@@ -1480,6 +1479,14 @@ public static class ComponentExtension
                 components.Add(tComponent);
         }
         return components.ToArray();
+    }
+
+    public static Component SetParent(this Component component,Component parent)
+    {
+        Transform trans = component.transform;
+        Transform parentTrans = parent.transform;
+        trans.SetParent(parentTrans);
+        return component;
     }
 }
 #endregion

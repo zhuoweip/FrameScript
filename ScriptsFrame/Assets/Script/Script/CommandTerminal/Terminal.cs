@@ -26,9 +26,9 @@ namespace CommandTerminal
         float SmallTerminalRatio = 1f;//默认0.33
 
         [Tooltip("页面展开回滚的速度")]
-        [Range(100, 1000)]
+        [Range(100, 5000)]
         [SerializeField]
-        float ToggleSpeed = 1000;//默认360;
+        float ToggleSpeed = 5000;//默认360;
 
         [Tooltip("显示热键")]
         [SerializeField] string ToggleHotkey      = "`";

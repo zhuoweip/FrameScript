@@ -74,53 +74,81 @@ public class EditorTool : Editor {
     [MenuItem("GameObject/Tool/Copy Find Child Path _%#_ C",false,-1)]
     static void CopyFindChildPath()
     {
-        Object[] objAry = Selection.objects;
-        if (objAry.Length == 2)
+        //Object[] objAry = Selection.objects;
+        //if (objAry.Length == 2)
+        //{
+        //    GameObject gmObj0 = (GameObject)objAry[0];
+        //    GameObject gmObj1 = (GameObject)objAry[1];
+        //    List<Transform> listGameParent0 = new List<Transform>(gmObj0.transform.GetComponentsInParent<Transform>(true));
+        //    List<Transform> listGameParent1 = new List<Transform>(gmObj1.transform.GetComponentsInParent<Transform>(true));
+        //    System.Text.StringBuilder strBd = new System.Text.StringBuilder("");
+        //    if (listGameParent0.Contains(gmObj1.transform))
+        //    {
+        //        int startIndex = listGameParent0.IndexOf(gmObj1.transform);
+        //        Debug.Log(startIndex);
+        //        for (int i = startIndex; i >= 0; i--)
+        //        {
+        //            if (i != startIndex)
+        //                strBd.Append(listGameParent0[i].gameObject.name).Append(i != 0 ? "/" : "");
+        //        }
+        //    }
+
+        //    if (listGameParent1.Contains(gmObj0.transform))
+        //    {
+        //        int startIndex = listGameParent1.IndexOf(gmObj0.transform);
+        //        for (int i = startIndex; i >= 0; i--)
+        //        {
+        //            if (i != startIndex)
+        //                strBd.Append(listGameParent1[i].gameObject.name).Append(i != 0 ? "/" : "");
+        //        }
+        //    }
+        //    CopyStrInfo(strBd.ToString());
+        //}
+
+        /*------------上面一种方法太复杂,直接用原生API,Selection是无法判断选择的父子级关系的,所以要正反判断两次-----------------------*/
+        string str = string.Empty;
+        GameObject[] gameObjs = Selection.gameObjects;
+        if (gameObjs.Length == 2)
         {
-            GameObject gmObj0 = (GameObject)objAry[0];
-            GameObject gmObj1 = (GameObject)objAry[1];
-            List<Transform> listGameParent0 = new List<Transform>(gmObj0.transform.GetComponentsInParent<Transform>(true));
-            List<Transform> listGameParent1 = new List<Transform>(gmObj1.transform.GetComponentsInParent<Transform>(true));
-            System.Text.StringBuilder strBd = new System.Text.StringBuilder("");
-            if (listGameParent0.Contains(gmObj1.transform))
-            {
-                int startIndex = listGameParent0.IndexOf(gmObj1.transform);
-                Debug.Log(startIndex);
-                for (int i = startIndex; i >= 0; i--)
-                {
-                    if (i != startIndex)
-                        strBd.Append(listGameParent0[i].gameObject.name).Append(i != 0 ? "/" : "");
-                }
-            }
+            Transform target = gameObjs[0].transform;
+            Transform root = gameObjs[1].transform;
+            if (IsChild(target, root))
+                str = AnimationUtility.CalculateTransformPath(target, root);
+            if (IsChild(root, target))
+                str = AnimationUtility.CalculateTransformPath(root, target);
+        }
+        else
+            Debug.LogError("所选对象超过2个");
+        CopyStrInfo(str);
+    }
 
-            if (listGameParent1.Contains(gmObj0.transform))
-            {
-                int startIndex = listGameParent1.IndexOf(gmObj0.transform);
-                for (int i = startIndex; i >= 0; i--)
-                {
-                    if (i != startIndex)
-                        strBd.Append(listGameParent1[i].gameObject.name).Append(i != 0 ? "/" : "");
-                }
-            }
+    private static bool IsChild(Transform target, Transform root)
+    {
+        List<Transform> transList = LinqUtil.ToList(root.GetComponentsInChildren<Transform>());
+        if (transList.Contains(target))
+            return true;
+        return false;
+    }
 
-            TextEditor textEditor = new TextEditor();
-            textEditor.text = "\"" + strBd.ToString() + "\"";// "hello world";
-            textEditor.OnFocus();
-            textEditor.Copy();
-            string colorStr = strBd.Length > 0 ? "<color=green>" : "<color=red>";
-            if (string.IsNullOrEmpty(strBd.ToString()))
-                Debug.Log(colorStr + "选中对象没有父子级关系" + "</color>");
-            else
-            {
-                Debug.Log(colorStr + "复制：【\"" + strBd.ToString() + "\"】" + "</color>");
-                var utf8WithoutBom = new System.Text.UTF8Encoding(false);//无bom编码
-                StreamWriter sw = new StreamWriter("E://UGUI_Temp.txt", false, utf8WithoutBom);
-                sw.Write("transform.Find(" + strBd.ToString() + ")");
-                sw.Flush();
-                sw.Close();
-                sw.Dispose();
-                //System.Diagnostics.Process.Start("notepad++", "E://UGUI_Temp.txt");
-            }
+    private static void CopyStrInfo(string str)
+    {
+        TextEditor textEditor = new TextEditor();
+        textEditor.text = "\"" + str + "\"";// "hello world";
+        textEditor.OnFocus();
+        textEditor.Copy();
+        string colorStr = str.Length > 0 ? "<color=green>" : "<color=red>";
+        if (string.IsNullOrEmpty(str))
+            Debug.Log(colorStr + "选中对象没有父子级关系" + "</color>");
+        else
+        {
+            Debug.Log(colorStr + "复制：【\"" + str + "\"】" + "</color>");
+            var utf8WithoutBom = new System.Text.UTF8Encoding(false);//无bom编码
+            StreamWriter sw = new StreamWriter("E://UGUI_Temp.txt", false, utf8WithoutBom);
+            sw.Write("transform.Find(" + str + ")");
+            sw.Flush();
+            sw.Close();
+            sw.Dispose();
+            //System.Diagnostics.Process.Start("notepad++", "E://UGUI_Temp.txt");
         }
     }
 }

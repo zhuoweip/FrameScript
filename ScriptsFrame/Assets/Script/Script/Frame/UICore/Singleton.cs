@@ -23,29 +23,48 @@ namespace UICore
 
         }
     }
+
     //继承于Mono的单例模式
     public class  UnitySingleton<T> : MonoBehaviour where T:Component
     {
-        protected static T _instance;
+        protected static T instance = null;
+
         public static T Instance
         {
-            get
-            {
-                if (_instance==null)
+            get {
+                if (instance == null)
                 {
-                    GameObject go = GameObject.Find(typeof(T).Name);
-                    if (go==null)
+                    instance = FindObjectOfType(typeof(T)) as T;
+
+                    if (FindObjectsOfType<T>().Length > 1)
                     {
-                        Debug.LogError("场景里面找不到名称为"+ typeof(T).Name+"的物体");
+                        return instance;
                     }
-                    _instance = go.GetComponent<T>();
+
+                    if (instance == null)
+                    {
+                        string instanceName = typeof(T).Name;
+                        GameObject instanceGO = GameObject.Find(instanceName);
+
+                        if (instanceGO == null)
+                            instanceGO = new GameObject(instanceName);
+                        instance = instanceGO.AddComponent<T>();
+                        DontDestroyOnLoad(instanceGO);  //保证实例不会被释放
+                    }
                 }
-                return _instance;
+                return instance;
             }
         }
-        protected UnitySingleton()
-        {
 
+        protected virtual void Update()
+        { }
+
+        protected virtual void OnGUI()
+        { }
+
+        protected virtual void OnDestroy()
+        {
+            instance = null;
         }
     }
 }

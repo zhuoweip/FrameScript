@@ -74,7 +74,7 @@ namespace UICore
 
         public void ShowUI(EUiId nextUiId, Transform parent = null, string EventTypeName = null, params object[] param)
         {
-            GameManager.Instance.PlayAudio();
+            AudioManager.Instance.PlayAudio();
             BaseUI currentUI = GetBaseUI(CurrentId);
 
             if (currentUI != null && parent == null)
@@ -147,7 +147,7 @@ namespace UICore
                             baseUI = willShowUI.AddComponent(type) as BaseUI;
                         }
                         //把生成出来的窗体放在UiRoot下面
-                        GameTool.AddChildToParent(parent == null ? uiRoot : parent, willShowUI.transform);
+                        willShowUI.SetParent(parent == null ? uiRoot : parent);
                         willShowUI.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
                         willShowUI.GetComponent<RectTransform>().anchoredPosition3D = Vector3.zero;
                         dicAllUI.Add(uiId, baseUI);
