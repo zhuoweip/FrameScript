@@ -414,6 +414,52 @@ public static class LinqUtil
     //static bool FF = LinqUtil.IsArrayEqual(AA, BB);
     #endregion
 
+    /// <summary>向前移动N位</summary>
+    public static List<T> Forward<T>(this List<T> list, int step = 1)
+    {
+        if (step >= list.Count || step == 0)
+        {
+            Debug.LogError("移动无效");
+            return list;
+        }
+
+        List<T> templist = new List<T>(step);
+        for (int i = 0; i < step; i++)
+            templist.Add(list[i]);
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (i + step < list.Count)
+                list[i] = list[i + step];
+            else
+                list[i] = templist[i - templist.Count - 1];
+        }
+        return list;
+    }
+
+    /// <summary>向后滚动N位</summary>
+    public static List<T> Back<T>(this List<T> list, int step = 1)
+    {
+        if (step >= list.Count || step == 0)
+        {
+            Debug.LogError("移动无效");
+            return list;
+        }
+
+        List<T> templist = new List<T>(step);
+        for (int i = list.Count - step; i < list.Count; i++)
+            templist.Add(list[i]);
+
+        for (int i = list.Count - 1; i >= 0; i--)
+        {
+            if (i >= step)
+                list[i] = list[i - step];
+            else
+                list[i] = templist[i];
+        }
+        return list;
+    }
+
     public static List<T> ToList<T>(T[] array)
     {
         return array.ToList();
