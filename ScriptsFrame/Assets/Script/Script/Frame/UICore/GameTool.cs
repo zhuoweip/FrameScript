@@ -419,6 +419,11 @@ public static class LinqUtil
         return array.ToList();
     }
 
+    public static IEnumerable<T> CustomWhere<T>(this List<T> list, Func<T, bool> predicate)
+    {
+        return list.Where(predicate).ToArray();
+    }
+
     /// <summary>List_Skip往后选择指定位数的元素   Take从头开始选取固定数量的元素</summary>
     public static List<T> SubArray<T>(this List<T> list, int startIndex, int length = -1)
     {
@@ -430,6 +435,11 @@ public static class LinqUtil
 
     /// <summary>选取符合条件的元素</summary>
     public delegate bool SelectAction<T>(T o);
+
+    public static IEnumerable<T> ToArray<T>(this List<T> list)
+    {
+        return list.ToArray();
+    }
 
     public static IEnumerable<T> Selectarray<T>(this List<T> list, SelectAction<T> selectAction)
     {
@@ -764,6 +774,11 @@ public static class TransformUtil
     {
         Vector3 newScale = new Vector3(transform.localScale.x, transform.localScale.y, z);
         transform.localScale = newScale;
+    }
+
+    public static void SetLocalAngle(this Transform transform, Vector3 eulerAngle)
+    {
+        transform.localEulerAngles = new Vector3(eulerAngle.x, eulerAngle.y, eulerAngle.z);
     }
 
     public static void SetLocalAngleX(this Transform transform, float x)
@@ -1296,6 +1311,12 @@ public static class GameObjectExtension
     public static GameObject Hide(this GameObject selfObj)
     {
         selfObj.SetActive(false);
+        return selfObj;
+    }
+
+    public static GameObject SetLoclEular(this GameObject selfObj, Vector3 eulerAngle)
+    {
+        TransformUtil.SetLocalAngle(selfObj.transform, eulerAngle);
         return selfObj;
     }
 

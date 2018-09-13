@@ -6,6 +6,7 @@ public enum MusicType
 {
     NormalBg,
     Click,
+    ClickRight,
     CountDown,
 }
 
@@ -26,11 +27,12 @@ namespace UICore
     {
 
         public Dictionary<MusicType, string> dic = new Dictionary<MusicType, string>
-    {
-        { MusicType.NormalBg,"《龙谣》的4张专辑-02-道情(CCTV酒业广告曾用)_爱给网_aigei_com"},
-        { MusicType.Click,"click"},
-        { MusicType.CountDown,"倒计时"},
-    };
+        {
+            { MusicType.NormalBg,"柔和的风_爱给网_aigei_com"},
+            { MusicType.Click,"点击音效"},
+            { MusicType.ClickRight,"点击正确"},
+            { MusicType.CountDown,"倒计时"},
+        };
 
         public Action OnCompleteAction;
         private float time = 0;
@@ -44,23 +46,23 @@ namespace UICore
             get { return _bgSource; }
         }
 
-        public AudioSource AudioSource
+        public AudioSource AudioSource(int index)
         {
-            get { return _audioSource; }
+            return audioSources[index];
         }
+
+        private AudioSource[] audioSources;
 
         void Awake()
         {
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 5; i++)
                 transform.gameObject.AddComponent<AudioSource>();
             sources = transform.GetComponents<AudioSource>();
-            _audioSource = sources[0];
-            _bgSource = sources[1];
-
-            PlayBg(MusicType.NormalBg);
+            _bgSource = sources[0];
+            audioSources = (AudioSource[])LinqUtil.CustomWhere(sources,item => item != _bgSource);
         }
 
-        public void PlayBg(MusicType type)
+        public void Play_Bg(MusicType type)
         {
             if (_bgSource != null)
             {
@@ -73,9 +75,10 @@ namespace UICore
             _bgSource.loop = true;
         }
 
-        public void PlayAudio(MusicType type = MusicType.Click)
+        public void Play_Audio(MusicType type = MusicType.Click, int audioIndex = 0, bool isLoop = false)
         {
             time = 0;
+            _audioSource = audioSources[audioIndex];
             if (_audioSource != null)
             {
                 _audioSource.Stop();
@@ -84,9 +87,10 @@ namespace UICore
             AudioClip audioClip = Resources.Load<AudioClip>("Music" + "/" + dic[type]);
             _audioSource.clip = audioClip;
             _audioSource.Play();
+            _audioSource.loop = isLoop;
         }
 
-        private void Update()
+        protected override void Update()
         {
             if (_audioSource != null && _audioSource.clip != null)
             {
@@ -103,13 +107,16 @@ namespace UICore
     #region Audio链式拓展
     public static class AudioExtension
     {
-        /// <summary>播放</summary>
-        public static AudioManager Play(this AudioManager gm, MusicType musicType = MusicType.Click, SoundType soundType = SoundType.SoundFx)
+        public static AudioManager PlayBg(this AudioManager gm, MusicType musicType)
         {
-            if (soundType == SoundType.Bg)
-                gm.PlayBg(musicType);
-            else
-                gm.PlayAudio(musicType);
+            gm.Play_Bg(musicType);
+            return gm;
+        }
+
+        /// <summary>播放</summary>
+        public static AudioManager PlayAudio(this AudioManager gm, MusicType musicType = MusicType.Click, int index = 0, bool isLoop = false)
+        {
+            gm.Play_Audio(musicType, index, isLoop);
             return gm;
         }
 
@@ -121,12 +128,12 @@ namespace UICore
         }
 
         /// <summary>设置音量</summary>
-        public static AudioManager SetVolume(this AudioManager gm, float volume, SoundType soundType = SoundType.SoundFx)
+        public static AudioManager SetVolume(this AudioManager gm, float volume, int index = 0, SoundType soundType = SoundType.SoundFx)
         {
             if (soundType == SoundType.Bg)
                 gm.BgSource.volume = volume;
             else
-                gm.AudioSource.volume = volume;
+                gm.AudioSource(index).volume = volume;
             return gm;
         }
     }

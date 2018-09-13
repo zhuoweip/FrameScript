@@ -74,7 +74,7 @@ namespace UICore
 
         public void ShowUI(EUiId nextUiId, Transform parent = null, string EventTypeName = null, params object[] param)
         {
-            AudioManager.Instance.PlayAudio();
+            AudioManager.Instance.Play_Audio();
             BaseUI currentUI = GetBaseUI(CurrentId);
 
             if (currentUI != null && parent == null)
