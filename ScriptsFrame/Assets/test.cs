@@ -8,6 +8,7 @@ public class test : MonoBehaviour {
     public AnimationCurve curve;
     private int aa = -1;
     private int bb = 0;
+
 	// Use this for initialization
 	void Start () {
 		
@@ -35,5 +36,16 @@ public class test : MonoBehaviour {
                 Debug.Log(list[i].name);
             }
         }
+
+        if (Input.GetMouseButton(0))
+        {
+            trans.RotateToTarget(Input.mousePosition);
+            //RotateYToTransform(trans, trans2.position);
+        }
 	}
+
+    public RectTransform trans;
+    public RectTransform trans2;
+
+    
 }

@@ -256,6 +256,134 @@ public static class GameTool
 }
 #endregion
 
+#region Func拓展
+public class FuncUtil
+{
+    public delegate void CallbackFunc();
+    public delegate void CallbackFuncWithInt(int param);
+    public delegate void CallbackFuncWithBool(bool param);
+    public delegate void CallbackFuncWithGameObj(GameObject param);
+    public delegate void CallbackFuncWithVector3(Vector3 param);
+    public delegate void CallbackFuncWithCollider(Collider param);
+
+    public delegate bool BoolCallbackFunc();
+    public delegate bool BoolCallbackFuncWithBool(bool param);
+    public delegate bool BoolCallbackFuncWithInt(int param);
+    public delegate bool BoolCallbackFuncWithStr(string param);
+    public delegate bool BoolCallbackFuncWithGameObj(GameObject param);
+
+    public delegate int IntCallbackFunc();
+    public delegate int IntCallbackFuncWithInt(int param);
+    public delegate int IntCallbackFuncWithFloat(float param);
+
+    /// <summary>
+    /// 发起一个持续一段时间的Update函数，每一帧更新
+    /// </summary>
+    /// <param name="continueTime">更新持续的时间</param>
+    /// <param name="updateFunc">更新的动作</param>
+    public static IEnumerator IUpdateDo(float continueTime, CallbackFunc updateFunc, CallbackFunc doneFunc = null)
+    {
+        float timePassed = 0F;
+        while (timePassed <= continueTime)
+        {
+            updateFunc();
+
+            timePassed += Time.deltaTime;
+            yield return 1;
+        }
+        if (doneFunc != null)
+            doneFunc();
+    }
+
+    /// <summary>
+    /// 启动一个update协程，并且可以指定间隔时间，停止条件
+    /// </summary>
+    /// <param name="deltaTime">update 间隔时间</param>
+	/// <param name="cbContinueCondition">继续更新的条件</param>
+	public static IEnumerator IUpdateDo(CallbackFunc updateFunc, float deltaTime = 0, BoolCallbackFunc cbContinueCondition = null)
+    {
+        //如果没有设置退出条件的回调函数，则设置回调函数为true造成死循环
+        if (cbContinueCondition == null)
+        {
+            cbContinueCondition = () => { return true; };
+        }
+        if (deltaTime > 0)
+        {
+            //有间隔更新
+            WaitForSeconds waitSeconds = new WaitForSeconds(deltaTime);
+
+            //Debug.Log ("deltatime:"+deltaTime);
+
+            while (cbContinueCondition() == true)
+            {
+                updateFunc();
+                yield return waitSeconds;
+            }
+        }
+        else
+        {
+            //每一帧更新
+            while (cbContinueCondition() == true)
+            {
+                updateFunc();
+                yield return 1;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 延迟一段时间才执行动作
+    /// </summary>
+    public static IEnumerator IDelayDoSth(CallbackFunc delayAction, float delayTime)
+    {
+        while (delayTime > 0)
+        {
+            yield return 1;
+            delayTime -= Time.deltaTime;
+        }
+        delayAction();
+    }
+
+    /// <summary>
+    /// 延迟一帧才执行动作
+    /// </summary>
+    public static IEnumerator IDelayDoSth(CallbackFunc delayAction)
+    {
+        yield return 0;
+        delayAction();
+    }
+
+    /// <summary>
+    /// 压扁物体
+    /// </summary>
+    /// <param name="scaleTargetTimes">缩放倍数</param>
+    public static IEnumerator IScaleDownTrans(Transform m_transform, float scaleTargetTimes = 0.4F)
+    {
+        bool isShrink = scaleTargetTimes < 1F;                    //是否是缩小
+        Vector3 currScale = m_transform.localScale;
+        float currScaleY = currScale.y;
+        float tarScaleY = currScaleY * scaleTargetTimes;
+        float rateToScale = (currScaleY - tarScaleY);// *( isShrink ? 1F : -1F ); //是缩小的话，则缩小率为（当前-目标）
+        //是放大的话，则为（目标-当前）
+
+        while (((currScaleY > tarScaleY) && isShrink)              //缩小的情况下，则是在当前还比目标状态大的情况下进行缩小
+            ||
+            ((!isShrink) && currScaleY < tarScaleY)                //放大时，则是在当前还比target小的情况下进行缩大
+            )
+        {
+            //缩小时减少，放大时增大
+            currScaleY -= rateToScale * Time.deltaTime;// *( isShrink ? -1 : 1 );
+            currScale.y = currScaleY;
+            m_transform.localScale = currScale;
+            yield return 1;
+        }
+
+        currScale.y = tarScaleY;
+        m_transform.localScale = currScale;
+    }
+}
+#endregion
+
 #region 数学
 public class MathHelpr
 {
@@ -852,6 +980,31 @@ public static class TransformUtil
     public static void SetSizeDelta(this RectTransform rectTransfrom, Vector2 size)
     {
         rectTransfrom.sizeDelta = new Vector2(size.x, size.y);
+    }
+
+    /// <summary>
+    /// UGUI转向目标物体
+    /// </summary>
+    public static void RotateToTarget(this RectTransform rectTransfrom, Vector3 target)
+    {
+        //这里转向默认改变的是X轴的值
+        rectTransfrom.LookAt(target);
+        Vector3 eulerRotate = rectTransfrom.rotation.eulerAngles;
+        float offsetX = target.x - rectTransfrom.position.x;
+
+        //修正欧拉角转向
+        if (offsetX >= 0)
+        {
+            if ((eulerRotate.x >= 0 && eulerRotate.x < 90) || (eulerRotate.x > 270 && eulerRotate.x <= 360))
+                eulerRotate.z = -eulerRotate.x;
+        }
+        else
+        {
+            if ((eulerRotate.x >= 0 && eulerRotate.x < 90) || (eulerRotate.x > 270 && eulerRotate.x <= 360))
+                eulerRotate.z = eulerRotate.x - 180;
+        }
+        eulerRotate.x = eulerRotate.y = 0;
+        rectTransfrom.rotation = Quaternion.Euler(eulerRotate);
     }
 
     public static void SetLocalScale(this Transform transform, Vector3 scale)
