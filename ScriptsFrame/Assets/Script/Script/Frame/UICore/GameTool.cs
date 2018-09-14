@@ -578,6 +578,30 @@ public static class LinqUtil
         return list[UnityEngine.Random.Range(0, list.Count)];
     }
 
+    /// <summary>获取正负随机值</summary>
+    public static int GetRandom(int min, int max, ref int lastRandom)
+    {
+        if (min * max > 0) 
+        {
+            Debug.LogError("Min*Max非正负数");
+            return 0;
+        }
+        if (lastRandom == 0)
+        {
+            Debug.LogError("lastRandom必须为负数");
+            return 0;
+        }
+
+        int random;
+        do
+        {
+            random = UnityEngine.Random.Range(min, max);
+        }
+        while (lastRandom * random >= 0);
+        lastRandom = random;
+        return random;
+    }
+
     /// <summary>获取一个每次跟上次相差step长度的随机值</summary>
     public static int GetRandom(int min, int max,int step,ref int lastRandom)
     {
