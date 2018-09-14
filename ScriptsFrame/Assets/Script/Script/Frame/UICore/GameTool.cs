@@ -578,6 +578,37 @@ public static class LinqUtil
         return list[UnityEngine.Random.Range(0, list.Count)];
     }
 
+    /// <summary>获取一个每次跟上次相差step长度的随机值</summary>
+    public static int GetRandom(int min, int max,int step,ref int lastRandom)
+    {
+        if (step >= Math.Abs(max - min))
+        {
+            Debug.LogError("步长超限");
+            return max;
+        }
+
+        int random;
+        do
+        {
+            random = UnityEngine.Random.Range(min, max);
+        }
+        while (Math.Abs(lastRandom - random) < step);
+        lastRandom = random;
+        return random;
+    }
+
+    /// <summary>curve.Evaluate(Random.value)参数是随机出的一个值，可以认为是图中的横坐标，函数会返回它所对应的竖坐标的值</summary>
+    public static float GetRandom(AnimationCurve curve)
+    {
+        return curve.Evaluate(UnityEngine.Random.value);
+    }
+
+    /// <summary>curve.Evaluate(Random.value)参数是随机出的一个值，可以认为是图中的横坐标，函数会返回它所对应的竖坐标的值</summary>
+    public static int GetRandomInt(AnimationCurve curve)
+    {
+        return Mathf.RoundToInt(GetRandom(curve));
+    }
+
     /// <summary>从一组数组中随机选择一个数，随机概率</summary>
     public static float GetRandom(float[] probs)
     {
