@@ -23,9 +23,9 @@ r2btn = GameTool.GetTheChildComponent<Button>(gameObject,"r2");
     protected override void RegistBtns()
     {
         base.RegistBtns();
-r2btn.onClick.AddListener(() => { UIManager.Instance.ShowUI(EUiId.MainUI); });
+r2btn.onClick.AddListener(() => { UIManager.Instance.ShowUI(EUiId.MainUI,SceneTransType.Cinema); });
         r1btn.onClick.AddListener(() => {
-            UIManager.Instance.ShowUI(EUiId.GameBUI,this.transform);
+            UIManager.Instance.ShowUI(EUiId.GameBUI,SceneTransType.Null, this.transform);
         });
     }
 

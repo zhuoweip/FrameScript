@@ -62,8 +62,6 @@ public static class GameTool
         return count;
     }
 
-
-
     /// <summary>获取子物体目录路径</summary>
     public static string GetPath(this Transform transform)
     {
@@ -982,6 +980,15 @@ public static class TransformUtil
         rectTransfrom.sizeDelta = new Vector2(size.x, size.y);
     }
 
+    /// <summary>是否父子级关系</summary>
+    public static bool IsChildOf(this Transform transform, Transform parent, bool withoutFinding = true)
+    {
+        if (withoutFinding)     //不用向上找的时候，直接判断
+            return transform.parent == parent;
+        else                    //需要向上找的时候，使用自带方法
+            return transform.IsChildOf(parent);
+    }
+
     /// <summary>
     /// UGUI转向目标物体
     /// </summary>
@@ -1048,6 +1055,109 @@ public static class TransformUtil
     public static void SetLocalAngleZ(this Transform transform, float z)
     {
         transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
+    }
+
+    /// <summary>获得一级子物体</summary>
+    public static Transform[] GetFirstChildren(this Transform transform)
+    {
+        int childCount = transform.childCount;
+        Transform[] result = new Transform[childCount];
+        for (int i = 0; i < childCount; i++)
+            result[i] = transform.GetChild(i);
+        return result;
+    }
+
+    /// <summary>
+    /// DFS查找，获得Transform的子物体（及其后代）中第一个含有该名字的物体。适用于需要深度搜索的情况
+    /// </summary>
+    private static Transform GetChildByNameInDFS(this Transform transform, string childObjName)
+    {
+        //深度优先（DFS）找到该名字的Transform 
+        //使用一个栈进行遍历 =_=
+        System.Collections.Generic.Stack<Transform> stack =
+            new System.Collections.Generic.Stack<Transform>();
+        //--将parent入栈
+        stack.Push(transform);
+        Transform tmp;
+        //--DFS开始
+        while (stack.Count > 0)
+        {
+            tmp = stack.Pop();
+            if (tmp.name.Equals(childObjName))
+            {
+                //Great, got it
+                return (Transform)tmp;
+            }
+            //--push back the children
+            for (int i = tmp.childCount - 1; i >= 0; i--)
+            {
+                stack.Push(tmp.GetChild(i));
+            }
+        }
+        //Not found
+        return null;
+    }
+
+    /// <summary>
+    /// 采用广度优先的方式查找Transform的子物体（及其后代）中第一个含有该名字的物体。适用于无需太多深度搜索的情况；
+    /// </summary>
+    private static Transform GetChildByNameInBFS(this Transform transform, string childObjName)
+    {
+        //深度优先（BFS）找到该名字的Transform 
+        //使用一个栈进行遍历 =_=
+        System.Collections.Generic.Queue<Transform> stack =
+            new System.Collections.Generic.Queue<Transform>();
+        //--将parent入栈
+        stack.Enqueue(transform);
+        Transform tmp;
+        //--BFS开始
+        while (stack.Count > 0)
+        {
+            tmp = stack.Dequeue();
+            if (tmp.name.Equals(childObjName))
+            {
+                //Great, got it
+                return (Transform)tmp;
+            }
+            //--push back the children
+            for (int i = 0; i < tmp.childCount; i++)
+            {
+                stack.Enqueue(tmp.GetChild(i));
+            }
+        }
+        //Not found
+        return null;
+    }
+
+
+    /// <summary>
+    /// 获得一个物体（或者其组件），可采用BFS（或DFS）的查找方法
+    /// </summary>
+    /// <param name="useBFS">适用于层级较低的内容，避免较深查找</param>
+    public static T GetChildByName<T>(this Transform transform, string childObjName, bool useBFS = true)
+    {
+        Transform childGot;
+        if (useBFS)
+            childGot = GetChildByNameInBFS(transform, childObjName);
+        else
+            childGot = GetChildByNameInDFS(transform, childObjName);
+        if (childGot == null)
+            //Not found
+            return default(T);
+        else
+            return childGot.GetComponent<T>();
+    }
+
+    /// <summary>
+    /// 获得一个Transform，可选择BFS（默认广度优先搜索）或者DFS
+    /// </summary>
+    /// <param name="useBFS">适用于层级较低的内容，避免较深查找</param>
+    public static Transform GetChildByName(this Transform transform, string childObjName, bool useBFS = true)
+    {
+        if (useBFS)
+            return GetChildByNameInBFS(transform, childObjName);
+        else
+            return GetChildByNameInDFS(transform, childObjName);
     }
 }
 #endregion
@@ -1593,6 +1703,7 @@ public static class GameObjectExtension
         SetLocalPos(selfObj, Vector3.zero);
         return selfObj;
     }
+
 }
 #endregion
 

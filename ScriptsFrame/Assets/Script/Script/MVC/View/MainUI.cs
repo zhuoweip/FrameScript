@@ -33,7 +33,7 @@ r3btn = GameTool.GetTheChildComponent<Button>(gameObject,"r3");
     protected override void RegistBtns()
     {
         base.RegistBtns();
-r3btn.onClick.AddListener(() => { UIManager.Instance.ShowUI(EUiId.GameAUI); });
+r3btn.onClick.AddListener(() => { UIManager.Instance.ShowUI(EUiId.GameAUI,SceneTransType.Tiles); });
         //RegistBtnsAnimation();
     }
 

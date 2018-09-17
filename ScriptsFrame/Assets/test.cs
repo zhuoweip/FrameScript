@@ -9,9 +9,11 @@ public class test : MonoBehaviour {
     private int aa = -1;
     private int bb = 0;
 
+
+    public Transform cc;
 	// Use this for initialization
 	void Start () {
-		
+        transform.IsChildOf(cc);
 	}
 	
 

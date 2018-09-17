@@ -21,7 +21,7 @@ namespace UICore
         private Transform uiRoot;
 
         //当前ID
-        [HideInInspector]
+        //[HideInInspector]
         public EUiId CurrentId = EUiId.NullUI;
 
         private Type[] baseUiSubTypes;
@@ -44,8 +44,8 @@ namespace UICore
 
         void Awake()
         {
-            canvas = this.transform.parent;
             uiRoot = GameObject.Find("UIRoot").transform;
+            canvas = uiRoot.parent;
             dicAllUI = new Dictionary<EUiId, BaseUI>();
             dicShowUI = new Dictionary<EUiId, BaseUI>();
             InitGetBaseUiSubType();
@@ -67,53 +67,64 @@ namespace UICore
                 dicShowUI.Clear();
             }
             //切换场景的时候不让画布销毁
-            DontDestroyOnLoad(canvas);
+            DontDestroyOnLoad(this);
             //显示主窗体
-            ShowUI(EUiId.MainUI);
+            ShowUI(CurrentId);//EUiId.MainUI
         }
 
-        public void ShowUI(EUiId nextUiId, Transform parent = null, string EventTypeName = null, params object[] param)
+        public void ShowUI(EUiId nextUiId, SceneTransType transType = SceneTransType.Null, Transform parent = null, string EventTypeName = null, params object[] param)
         {
-            AudioManager.Instance.Play_Audio();
+            AudioManager.Instance.PlayAudio();
             BaseUI currentUI = GetBaseUI(CurrentId);
 
-            if (currentUI != null && parent == null)
+            SceneTransition.ShowTranstion(transType,
+            ()=>
             {
-                //父级baseUI
-                EUiId parentUiId = EUiId.NullUI;
-                BaseUI parentUI = currentUI.GetComponentInParentNotInCludSelf<BaseUI>();
-                if (parentUI != null)
-                    parentUiId = parentUI.UiId;
-
-                BaseUI[] childUI = currentUI.GetComponentsInFirstHierarchyChildren<BaseUI>(true);
-
-                //如果父级有baseUI并且直接打开的是别的UI的话就删除
-                if (parentUiId != EUiId.NullUI && nextUiId != parentUiId)
-                    Destroy(parentUI.gameObject);
-                else
-                    Destroy(currentUI.gameObject);
-
-                RemoveUiId(CurrentId);
-                if (childUI != null)
+                if (transType == SceneTransType.Newspaper)
                 {
-                    for (int i = 0; i < childUI.Length; i++)
-                    {
-                        EUiId chiidUiId = childUI[i].UiId;
-                        RemoveUiId(chiidUiId);
-                    }
                 }
-                if (parentUiId != EUiId.NullUI && nextUiId != parentUiId)
-                    RemoveUiId(parentUiId);
-            }
-
-            BaseUI baseUI = JudgeShowUI(nextUiId, parent);
-            if (baseUI != null)
+            },
+            () =>
             {
-                if (EventTypeName != null)
-                    SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
-                CurrentId = nextUiId;
-                baseUI.ShowUI();
-            }
+                if (currentUI != null && parent == null)
+                {
+                    //父级baseUI
+                    EUiId parentUiId = EUiId.NullUI;
+                    BaseUI parentUI = currentUI.GetComponentInParentNotInCludSelf<BaseUI>();
+                    if (parentUI != null)
+                        parentUiId = parentUI.UiId;
+
+                    BaseUI[] childUI = currentUI.GetComponentsInFirstHierarchyChildren<BaseUI>(true);
+
+                    //如果父级有baseUI并且直接打开的是别的UI的话就删除
+                    if (parentUiId != EUiId.NullUI && nextUiId != parentUiId)
+                        Destroy(parentUI.gameObject);
+                    else
+                        Destroy(currentUI.gameObject);
+
+                    RemoveUiId(CurrentId);
+                    if (childUI != null)
+                    {
+                        for (int i = 0; i < childUI.Length; i++)
+                        {
+                            EUiId chiidUiId = childUI[i].UiId;
+                            RemoveUiId(chiidUiId);
+                        }
+                    }
+                    if (parentUiId != EUiId.NullUI && nextUiId != parentUiId)
+                        RemoveUiId(parentUiId);
+                }
+
+                BaseUI baseUI = JudgeShowUI(nextUiId, parent);
+                if (baseUI != null)
+                {
+                    baseUI.HideUI();
+                    if (EventTypeName != null)
+                        SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
+                    CurrentId = nextUiId;
+                    baseUI.ShowUI();
+                }
+            });
         }
 
         private void RemoveUiId(EUiId uiId)

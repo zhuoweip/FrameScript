@@ -55,16 +55,11 @@ namespace UICore
         }
 
         //隐藏
-        public virtual void HideUI(DelAfterHideUI del)
+        public virtual void HideUI(DelAfterHideUI del = null)
         {
             this.gameObject.SetActive(false);
             if (del != null) { del(); }
-            Save();
         }
-
-        //保存
-        protected virtual void Save()
-        { }
     }
 }
 
