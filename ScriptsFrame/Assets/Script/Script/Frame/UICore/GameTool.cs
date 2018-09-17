@@ -294,7 +294,7 @@ public class FuncUtil
     }
 
     /// <summary>
-    /// 启动一个update协程，并且可以指定间隔时间，停止条件
+    /// 启动一个update协程，并且可以指定间隔时间，停止条件, 最开始的cbContinueCondition要为真才可以运行，然后为假就中断
     /// </summary>
     /// <param name="deltaTime">update 间隔时间</param>
 	/// <param name="cbContinueCondition">继续更新的条件</param>
@@ -309,9 +309,6 @@ public class FuncUtil
         {
             //有间隔更新
             WaitForSeconds waitSeconds = new WaitForSeconds(deltaTime);
-
-            //Debug.Log ("deltatime:"+deltaTime);
-
             while (cbContinueCondition() == true)
             {
                 updateFunc();
@@ -351,16 +348,41 @@ public class FuncUtil
         delayAction();
     }
 
+    //StartCoroutine(FuncUtil.IDelayDoSth(delegate () { return Input.GetKeyDown(KeyCode.F); }, () => { Debug.Log(111); }, Time.deltaTime));
     /// <summary>
-    /// 压扁物体
+    /// 延迟直到条件满足才执行动作
     /// </summary>
-    /// <param name="scaleTargetTimes">缩放倍数</param>
-    public static IEnumerator IScaleDownTrans(Transform m_transform, float scaleTargetTimes = 0.4F)
+    /// <param name="cb_delayAction">延迟执行的动作</param>
+    /// <param name="cb_isSatisfied">当某个条件满足时才能执行</param>
+    /// <param name="checkTime">每次检查条件的时间</param>
+    public static IEnumerator IDelayDoSth(BoolCallbackFunc cb_isSatisfied, CallbackFunc cb_delayAction, float checkTime)
     {
-        bool isShrink = scaleTargetTimes < 1F;                    //是否是缩小
+        //如果没有设置退出条件的回调函数，或者时间为负，直接完成
+        if (cb_isSatisfied == null || checkTime < 0)
+        {
+            Debug.LogError("Condition:" + cb_isSatisfied + " ,checkTime:" + checkTime);
+            cb_delayAction();
+        }
+
+        //有间隔更新
+        WaitForSeconds waitSeconds = new WaitForSeconds(checkTime);
+        //--条件不满足时，不断等待：
+        while (cb_isSatisfied() == false)
+            yield return waitSeconds;
+
+        cb_delayAction();
+    }
+
+    /// <summary>
+    /// 缩放物体 注：这个是以中心点做缩放，所以物体距离参考平面的高度是不固定的
+    /// </summary>
+    /// <param name="endValue">缩放倍数</param>
+    public static IEnumerator IScaleDownTrans(Transform m_transform, float endValue = 0.4f, float time = 1f)
+    {
+        bool isShrink = endValue < 1F;                    //是否是缩小
         Vector3 currScale = m_transform.localScale;
         float currScaleY = currScale.y;
-        float tarScaleY = currScaleY * scaleTargetTimes;
+        float tarScaleY = currScaleY * endValue;
         float rateToScale = (currScaleY - tarScaleY);// *( isShrink ? 1F : -1F ); //是缩小的话，则缩小率为（当前-目标）
         //是放大的话，则为（目标-当前）
 
@@ -370,7 +392,7 @@ public class FuncUtil
             )
         {
             //缩小时减少，放大时增大
-            currScaleY -= rateToScale * Time.deltaTime;// *( isShrink ? -1 : 1 );
+            currScaleY -= rateToScale * Time.deltaTime / time;// *( isShrink ? -1 : 1 );
             currScale.y = currScaleY;
             m_transform.localScale = currScale;
             yield return 1;
