@@ -34,6 +34,9 @@ namespace CommandTerminal
         [SerializeField] string ToggleHotkey      = "`";
         [SerializeField] string ToggleFullHotkey  = "#`";
         [SerializeField] int BufferSize           = 512;
+        [SerializeField]
+        [Range(50,100)]
+        int SizeScale = 50;
 
         [Header("Input")]
         [SerializeField] Font ConsoleFont;
@@ -212,6 +215,7 @@ namespace CommandTerminal
             label_style.font = ConsoleFont;
             label_style.normal.textColor = ForegroundColor;
             label_style.wordWrap = true;
+            label_style.fontSize = SizeScale;
         }
 
         void SetupInput() {

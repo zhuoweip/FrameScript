@@ -251,6 +251,73 @@ public static class GameTool
             property.SetValue(o, value, null);
         }
     }
+
+    /// <summary>
+    /// 运行cmd命令
+    /// 会显示命令窗口
+    /// </summary>
+    /// <param name="cmdExe">指定应用程序的完整地址</param>
+    /// <param name="cmdStr">执行命令行参数</param>
+    public static bool RunCmd(string cmdExe, string cmdStr)
+    {
+        bool result = false;
+        try
+        {
+            using (System.Diagnostics.Process process = new System.Diagnostics.Process())
+            {
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo(cmdExe, cmdStr);
+                process.StartInfo = startInfo;
+                process.Start();
+                process.WaitForExit();
+                result = true;
+            }
+        }
+        catch
+        {
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 运行cmd命令
+    /// 不现实窗口
+    /// </summary>
+    /// <param name="cmdExe">指定应用程序的完整地址</param>
+    /// <param name="cmdStr">执行命令行参数</param>
+    public static bool RunCmd2(string cmdExe, string cmdStr)
+    {
+        bool result = false;
+        try
+        {
+            using (System.Diagnostics.Process process = new System.Diagnostics.Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardInput = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                string value = string.Format("\"{0}\" {1} {2}", cmdExe, cmdStr, "&exit");
+                process.StandardInput.WriteLine(value);
+                process.StandardInput.AutoFlush = true;
+                process.WaitForExit();
+                result = true;
+            }
+        }
+        catch
+        {
+        }
+        return result;
+    }
+
+    /// <summary>交换参数的值</summary>
+    public static void Swap<T>(ref T first, ref T second)
+    {
+        T t = first;
+        first = second;
+        second = t;
+    }
 }
 #endregion
 
@@ -532,6 +599,98 @@ public class MathHelpr
         float rSqua = (r1 + r2) * (r1 + r2);
         return disSqua < rSqua;
     }
+
+    /// <summary>十进制数字转换为任意进制格式 </summary>
+    public static string NumberToBaseString(int number, byte b = 2)
+    {
+        if (number < b)
+        {
+            return Number2Sign(number);
+        }
+        else
+        {
+            int remainder = number % b;
+            int reducedNumber = (number - remainder) / b;
+            string restOfString = NumberToBaseString(reducedNumber, b);
+            return restOfString + Number2Sign(remainder);
+        }
+    }
+    /// <summary> 任意进制转换为十进制数字</summary>
+    public static int BaseStringToNumber(string digit, byte b = 2)
+    {
+        if (string.IsNullOrEmpty(digit))
+            return 0;
+
+        int length = digit.Length;
+        int output = Sign2Number(digit[length - 1]);
+        string remainingString = digit.Substring(0, length - 1);
+        int valueOfRemaining = BaseStringToNumber(remainingString, b);
+        output += b * valueOfRemaining;
+        return output;
+    }
+
+    /// <summary>数字转换为进制符</summary>
+    public static string Number2Sign(int number)
+    {
+        switch (number)
+        {
+            case 10:
+                return "A";
+            case 11:
+                return "B";
+            case 12:
+                return "C";
+            case 13:
+                return "D";
+            case 14:
+                return "E";
+            case 15:
+                return "F";
+            default:
+                return number.ToString();
+        }
+    }
+    /// <summary>进制符转换为数字</summary>
+    public static int Sign2Number(char hex)
+    {
+        switch (hex)
+        {
+            case 'A':
+                return 10;
+            case 'B':
+                return 11;
+            case 'C':
+                return 12;
+            case 'D':
+                return 13;
+            case 'E':
+                return 14;
+            case 'F':
+                return 15;
+            default:
+                return hex - '0';
+        }
+    }
+    public static int Sign2Number(string hex)
+    {
+        return Sign2Number(hex[0]);
+    }
+
+    /// <summary>获取数组内最大元素的十进制位数(仅适用整型)</summary>
+    public static int GetMaxLength(int[] arr)
+    {
+        int num = -2147483648;
+        for (int i = 0; i < arr.Length; i++)
+        {
+            int num2 = arr[i];
+            bool flag = num2 > num;
+            if (flag)
+            {
+                num = num2;
+            }
+        }
+        return num.ToString().Length;
+    }
 }
 
 #endregion
@@ -707,6 +866,405 @@ public static class LinqUtil
         return Enumerable.SequenceEqual(array1, array2);
     }
 
+    /// <summary>删除所传入的数组的最后一个元素</summary>
+    public static T ArrayPop<T>(ref T[] oldArray)
+    {
+        T result = oldArray[oldArray.Length - 1];
+        T[] array = new T[oldArray.Length - 1];
+        for (int i = 0; i < array.Length; i++)
+        {
+            array[i] = oldArray[i];
+        }
+        oldArray = array;
+        return result;
+    }
+
+    /// <summary>删除所传入的数组的第一个元素</summary>
+    public static T ArrayShift<T>(ref T[] oldArray)
+    {
+        T result = oldArray[0];
+        T[] array = new T[oldArray.Length - 1];
+        for (int i = 0; i < array.Length; i++)
+        {
+            array[i] = oldArray[i + 1];
+        }
+        oldArray = array;
+        return result;
+    }
+
+    /// <summary>
+    /// 添加新元素到数组最后
+    /// </summary>
+    /// <typeparam name="T">数组元素类型</typeparam>
+    /// <param name="oldArray">被添加元素的数组</param>
+    /// <param name="newElement">被添加的新元素</param>
+    /// <returns>新元素将被添加到数组末尾，并返回一个新数组对象，该数组长度比以前大</returns>
+    public static T[] ArrayPush<T>(T[] oldArray, T[] newElement)
+    {
+        int num = oldArray.Length + newElement.Length;
+        T[] array = new T[num];
+        for (int i = 0; i < array.Length; i++)
+        {
+            bool flag = i < array.Length - newElement.Length;
+            if (flag)
+            {
+                array[i] = oldArray[i];
+            }
+            else
+            {
+                array[i] = newElement[i - oldArray.Length];
+            }
+        }
+        return array;
+    }
+
+    /// <summary>
+    /// 添加新元素到数组最前
+    /// </summary>
+    /// <typeparam name="T">数组元素类型</typeparam>
+    /// <param name="oldArray">被添加元素的数组</param>
+    /// <param name="newElement">被添加的新元素</param>
+    /// <returns>新元素将被添加到数组最前，并返回一个新数组对象，该数组长度比以前大</returns>
+    public static T[] ArrayUnshift<T>(T[] oldArray, T[] newElement)
+    {
+        int num = oldArray.Length + newElement.Length;
+        T[] array = new T[num];
+        for (int i = 0; i < array.Length; i++)
+        {
+            bool flag = i < newElement.Length;
+            if (flag)
+            {
+                array[i] = newElement[i];
+            }
+            else
+            {
+                array[i] = oldArray[i - newElement.Length];
+            }
+        }
+        return array;
+    }
+
+    #region 排序算法
+
+    #region 归并排序
+    /// <summary>
+    /// 归并排序
+    /// </summary>
+    /// <typeparam name="T">数组类型</typeparam>
+    /// <param name="array">被操作数组</param>
+    /// <param name="first">首位置点</param>
+    /// <param name="last">尾位置点</param>
+    public static void MergeSortFunction<T>(ref T[] array, int first, int last) where T : IComparable<T>
+    {
+        try
+        {
+            bool flag = first < last;
+            if (flag)
+            {
+                int num = (first + last) / 2;
+                MergeSortFunction<T>(ref array, first, num);
+                MergeSortFunction<T>(ref array, num + 1, last);
+                MergeSortCore<T>(ref array, first, num, last);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 将两个有序的左右子表（以mid区分），合并成一个有序的表
+    /// </summary>
+    /// <typeparam name="T">数组类型</typeparam>
+    /// <param name="array">被操作的数组</param>
+    /// <param name="first">左子组首位置</param>
+    /// <param name="mid">中间</param>
+    /// <param name="last">右子组首位置</param>
+    private static void MergeSortCore<T>(ref T[] array, int first, int mid, int last) where T : IComparable<T>
+    {
+        try
+        {
+            int i = first;
+            int j = mid + 1;
+            T[] array2 = new T[last + 1];
+            int num = 0;
+            while (i <= mid && j <= last)
+            {
+                bool flag = array[i].CompareTo(array[j]) <= 0;
+                if (flag)
+                {
+                    array2[num++] = array[i++];
+                }
+                else
+                {
+                    array2[num++] = array[j++];
+                }
+            }
+            while (i <= mid)
+            {
+                array2[num++] = array[i++];
+            }
+            while (j <= last)
+            {
+                array2[num++] = array[j++];
+            }
+            num = 0;
+            for (int k = first; k <= last; k++)
+            {
+                array[k] = array2[num++];
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+    #endregion
+
+    #region 插入排序
+    /// <summary>
+    /// 插入排序（必须为实现了IComparable的对象类型）
+    /// </summary>
+    /// <param name="Array">被排序的数组</param>
+    /// <param name="isAscending">是否为升序</param>
+    /// <param name="val">要添加进的元素</param>
+    public static void InsertSort<T>(List<T> Array, bool isAscending = true, params T[] val) where T : IComparable<T>
+    {
+        T value = default(T);
+        bool flag = val.Length != 0;
+        if (flag)
+        {
+            val.ForEach(delegate (T v)
+            {
+                Array.Add(v);
+            });
+        }
+        int count = Array.Count;
+        for (int i = 1; i < count; i++)
+        {
+            for (int j = i; j > 0; j--)
+            {
+                if (isAscending)
+                {
+                    T t = Array[j];
+                    int num = t.CompareTo(Array[j - 1]);
+                    bool flag2 = num < 0;
+                    if (flag2)
+                    {
+                        value = Array[j];
+                        Array[j] = Array[j - 1];
+                        Array[j - 1] = value;
+                    }
+                }
+                else
+                {
+                    T t = Array[j];
+                    int num2 = t.CompareTo(Array[j - 1]);
+                    bool flag3 = num2 > 0;
+                    if (flag3)
+                    {
+                        value = Array[j];
+                        Array[j] = Array[j - 1];
+                        Array[j - 1] = value;
+                    }
+                }
+            }
+        }
+    }
+    #endregion
+
+    #region 基数排序
+    /// <summary>
+    /// 基数排序(仅自然数)可以在外部处理为同符号后处理再乘回去
+    /// </summary>
+    /// <param name="arr">被排序的整型数组</param>
+    public static void RadixSort(ref int[] arr)
+    {
+        int maxLength = MathHelpr.GetMaxLength(arr);
+        RadixSort(ref arr, maxLength);
+    }
+
+    private static void RadixSort(ref int[] arr, int iMaxLength)
+    {
+        List<int> list = new List<int>();
+        List<int>[] array = new List<int>[10];
+        for (int i = 0; i < array.Length; i++)
+        {
+            array[i] = new List<int>();
+        }
+        for (int j = 0; j < iMaxLength; j++)
+        {
+            int[] array2 = arr;
+            int k = 0;
+            while (k < array2.Length)
+            {
+                int item = array2[k];
+                string text = item.ToString();
+                char c;
+                try
+                {
+                    c = text[text.Length - 1 - j];
+                }
+                catch
+                {
+                    array[0].Add(item);
+                    goto IL_14C;
+                }
+                goto IL_80;
+                IL_14C:
+                k++;
+                continue;
+                IL_80:
+                switch (c)
+                {
+                    case '0':
+                        array[0].Add(item);
+                        break;
+                    case '1':
+                        array[1].Add(item);
+                        break;
+                    case '2':
+                        array[2].Add(item);
+                        break;
+                    case '3':
+                        array[3].Add(item);
+                        break;
+                    case '4':
+                        array[4].Add(item);
+                        break;
+                    case '5':
+                        array[5].Add(item);
+                        break;
+                    case '6':
+                        array[6].Add(item);
+                        break;
+                    case '7':
+                        array[7].Add(item);
+                        break;
+                    case '8':
+                        array[8].Add(item);
+                        break;
+                    case '9':
+                        array[9].Add(item);
+                        break;
+                    default:
+                        throw new Exception("未知错误");
+                }
+                goto IL_14C;
+            }
+            for (int l = 0; l < array.Length; l++)
+            {
+                int[] array3 = (int[])array[l].ToArray<int>();
+                for (int m = 0; m < array3.Length; m++)
+                {
+                    int item2 = array3[m];
+                    list.Add(item2);
+                    array[l].Clear();
+                }
+            }
+            arr = (int[])list.ToArray<int>();
+            list.Clear();
+        }
+    }
+
+
+    #endregion
+
+    #endregion
+
+    /// <summary>
+    /// 泛型为所有对象组提供一个扩展方法，遍历该对象组并执行一个委托方法
+    /// </summary>
+    /// <typeparam name="T">对象类别,必须是实现了IComparable接口的类别</typeparam>
+    /// <param name="n">被遍历的对象组</param>
+    /// <param name="action">执行委托方法</param>
+    public static void ForEach<T>(this T[] n, Action<T> action) where T : IComparable<T>
+    {
+        bool flag = n.Length != 0;
+        if (flag)
+        {
+            for (int i = 0; i < n.Length; i++)
+            {
+                action(n[i]);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取调和级数到达目标值的元素数量
+    /// </summary>
+    /// <param name="Denominator">调和级数基础分母值（第一项的分母值）</param>
+    /// <param name="Arithmetic">分母等差值</param>
+    /// <param name="targetValue">目标值</param>
+    /// <returns>返回该级数的元素数量</returns>
+    public static ulong HarmonicSeriesCumulation(float Denominator, float Arithmetic, float targetValue)
+    {
+        ulong num = 0uL;
+        try
+        {
+            double num2 = 0.0;
+            while (num2 < (double)targetValue)
+            {
+                num2 += (double)(1f / (Denominator + Arithmetic * num));
+                num += 1uL;
+            }
+        }
+        catch
+        {
+            throw new Exception("目标值超出可计算范围！");
+        }
+        return num;
+    }
+
+
+    /// <summary>
+    /// 获取调和级数的和1/2 + 1/4 + 1/6 + 1/8
+    /// </summary>
+    /// <param name="Denominator">基础分母</param>
+    /// <param name="Arithmetic">等差值</param>
+    /// <param name="ElementNum">元素数量</param>
+    /// <returns>返回该级数的和</returns>
+    public static float HarmonicSeriesForSum(float Denominator, float Arithmetic, int ElementNum)
+    {
+        ElementNum--;
+        float num = 0f;
+        while (ElementNum >= 0)
+        {
+            float num2 = Denominator + Arithmetic * (float)ElementNum;
+            bool flag = num2 != 0f;
+            if (flag)
+            {
+                num += 1f / num2;
+            }
+            ElementNum--;
+        }
+        return num;
+    }
+
+    /// <summary>
+    /// 霍纳法则运算
+    /// 求多项式值的合快速算法
+    /// </summary>
+    /// <param name="Arr">数组</param>
+    /// <param name="x">幂参数值</param>
+    /// <returns>返回该数组的x值次方的多项式集合的和</returns>
+    public static int Horner(int[] Arr, int x)
+    {
+        int num = 0;
+        int num2 = Arr.Length - 1;
+        bool flag = num2 >= 1;
+        if (flag)
+        {
+            for (int i = 0; i < num2; i++)
+            {
+                num = x * (Arr[num2 - i] + num);
+            }
+        }
+        return num + Arr[0];
+    }
+
+
     #region 随机数
     /// <summary>获取array随机值</summary>
     public static T GetRandom<T>(this T[] array)
@@ -810,6 +1368,71 @@ public static class LinqUtil
             cards[randomIndex] = temp;
         }
         return cards;
+    }
+
+    // <summary>
+    /// 随机生成N个和为目标数的正整数
+    /// </summary>
+    /// <param name="TotalNum">目标总数</param>
+    /// <param name="n">生成的数字量,必然大于1，默认为2</param>
+    /// <param name="AbsolutelyAlone">结果值是否绝对唯一，如果为true，则不保证数量符合需求,且计算复杂度增加</param>
+    /// <returns>返回一个无符号整型数组</returns>
+    public static uint[] GetRandomNumforAll(uint TotalNum, int n = 2, bool AbsolutelyAlone = false)
+    {
+        System.Random random = new System.Random();
+        bool flag = n <= 1 || (long)n > (long)((ulong)TotalNum);
+        if (flag)
+        {
+            while (n <= 1 || (long)n > (long)((ulong)TotalNum))
+            {
+                n = random.Next(2, (int)(TotalNum + 1u));
+            }
+        }
+        n--;
+        List<uint> list = new List<uint>();
+        List<uint> list2 = new List<uint>();
+        bool flag2 = AbsolutelyAlone;
+        do
+        {
+            list.Add(0u);
+            for (int i = 0; i < n; i++)
+            {
+                uint item = (uint)random.Next(1, (int)TotalNum);
+                list.Add(item);
+            }
+            list.Add(TotalNum);
+            InsertSort<uint>(list, true, new uint[0]);
+            for (int j = 0; j < list.Count - 1; j++)
+            {
+                list2.Add((uint)Math.Abs((long)((ulong)(list[j + 1] - list[j]))));
+            }
+            bool flag3 = flag2;
+            if (flag3)
+            {
+                flag2 = false;
+                HashSet<uint> source = new HashSet<uint>(list2);
+                source.ToList<uint>();
+                bool flag4 = source.ToList<uint>().Count != list2.Count;
+                if (flag4)
+                {
+                    flag2 = true;
+                }
+                bool flag5 = flag2;
+                if (flag5)
+                {
+                    list2.Clear();
+                    list.Clear();
+                    n = random.Next(2, (int)(TotalNum + 1u));
+                }
+            }
+        }
+        while (flag2);
+        uint[] array = new uint[list2.Count];
+        for (int k = 0; k < array.Length; k++)
+        {
+            array[k] = list2[k];
+        }
+        return array;
     }
 
     /// <summary>从一组数组中随机选择N个数作为新的数组</summary>
@@ -1377,67 +2000,96 @@ public class StringUtil
         Debug.Log(sStats);
     }
 
-    ///<summary>飘字提示字符串生成</summary>
-    public static string GetFomateString(string str, params string[] parm)
+    /// <summary>
+    /// 替换一个字符串的某一段字符为指定字符
+    /// </summary>
+    /// <param name="Str">被操作的字符串</param>
+    /// <param name="StartIndex">要被替换的字符在字符串中的开始标号</param>
+    /// <param name="val">替换目标字符串</param>
+    /// <returns>会自动根据目标字符串来获取要替换的字符长度</returns>
+    public static void ReplaceStr(ref string Str, int StartIndex, string val)
     {
-        // 获取参数字符长度
-        int destLen = 0;
-        for (int i = 0; i < parm.Length; i++)
+        char[] array = Str.ToCharArray();
+        char[] array2 = val.ToCharArray();
+        if (array2.Length + StartIndex > array.Length)
         {
-            destLen += parm[i].Length;
+            Debug.LogError("超出有效长度");
+            return;
         }
-
-        // 获取替换位置的索引
-        List<int> indexArr = new List<int>();
-        char[] charArr = str.ToCharArray();
-        for (int j = 0; j < charArr.Length; j++)
+        string text = "";
+        int num = 0;
+        while (array2.Length > num)
         {
-            if (charArr[j] == '%' && (charArr.Length > j + 1) && charArr[j + 1] == 's')
+            array[StartIndex] = array2[num];
+            StartIndex++;
+            num++;
+        }
+        char[] array3 = array;
+        for (int i = 0; i < array3.Length; i++)
+        {
+            char c = array3[i];
+            text += c.ToString();
+        }
+        Str = text;
+    }
+
+    /// <summary>
+    /// 替换字符为新字符串
+    /// </summary>
+    /// <param name="Str">被替换的字符串</param>
+    /// <param name="oldChar">旧的字符</param>
+    /// <param name="newString">要替换的字符串</param>
+    public static void ReplaceStr(ref string Str, char oldChar, string newString)
+    {
+        char[] array = Str.ToCharArray();
+        string text = "";
+        char[] array2 = array;
+        for (int i = 0; i < array2.Length; i++)
+        {
+            char c = array2[i];
+            string text2 = "";
+            bool flag = c == oldChar;
+            if (flag)
             {
-                indexArr.Add(j);
-                j++;
+                text2 = newString;
+            }
+            else
+            {
+                text2 += c.ToString();
+            }
+            text += text2;
+        }
+        Str = text;
+    }
+
+    /// <summary>
+    /// 获取一个字符串的同字符数量
+    /// </summary>
+    /// <param name="text">被操作的字符串</param>
+    /// <param name="pattern">字符分割规则。默认为将该字符串分割每个字符,直接传入一个字符将以那个字符为分割符号，加括弧号可以包含分割字符。支持正则表达式</param>
+    /// <returns></returns>
+    public static Dictionary<string, int> CountWords(string text, string pattern = "")
+    {
+        Dictionary<string, int> dictionary = new Dictionary<string, int>();
+        string[] array = Regex.Split(text, pattern);
+        string[] array2 = array;
+        for (int i = 0; i < array2.Length; i++)
+        {
+            string text2 = array2[i];
+            bool flag = dictionary.ContainsKey(text2);
+            if (flag)
+            {
+                Dictionary<string, int> arg_30_0 = dictionary;
+                string key = text2;
+                int num = arg_30_0[key];
+                arg_30_0[key] = num + 1;
+            }
+            else
+            {
+                dictionary[text2] = 1;
             }
         }
-
-        // 创建替换后的字符数组
-        char[] destCharArr = new char[destLen + charArr.Length - indexArr.Count * 2];
-
-        // 生成替换后的字符数组
-        int indexEnd = 0;
-        int destIndex = 0;
-        for (int k = 0; k < indexArr.Count; k++)
-        {
-            int index = indexArr[k];
-            int len = index - indexEnd;
-
-            int p = -1;
-            while (++p < len)
-            {
-                destCharArr[destIndex + p] = charArr[indexEnd + p];
-            }
-            indexEnd = index + 2;
-            destIndex += len;
-
-            p = -1;
-            //char[] srcCharArr = parm[k].ToCharArray();
-            int charArrLen = parm[k].Length;
-            while (++p < charArrLen)
-            {
-                destCharArr[destIndex + p] = parm[k][p];
-            }
-
-            destIndex += parm[k].Length;
-        }
-        // 剩余长度
-        int residueLen = charArr.Length - indexEnd;
-        int pl = -1;
-        while (++pl < residueLen)
-        {
-            destCharArr[destIndex + pl] = charArr[indexEnd + pl];
-        }
-
-        string strFomate = new string(destCharArr);
-        return strFomate;
+        return dictionary;
     }
 
     /// <summary>获取字符串中的中文个数</summary>
@@ -1470,6 +2122,8 @@ public class StringUtil
         }
         return true;
     }
+
+
 }
 #endregion
 

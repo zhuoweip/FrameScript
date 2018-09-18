@@ -1,11 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.EventSystems;
+using JacobGames.SuperInvoke;
 
 public class EventTriggerListener : UnityEngine.EventSystems.EventTrigger
 {
+    public delegate void EventDataDelegate(GameObject go, PointerEventData eventData);
+    public EventDataDelegate onDragEventData;
+    public EventDataDelegate onBeginDragEventData;
+    public EventDataDelegate onEndDragEventData;
+
     public delegate void VoidDelegate(GameObject go);
     public VoidDelegate onClick;
+    public VoidDelegate onDoubleClick;
     public VoidDelegate onDown;
     public VoidDelegate onEnter;
     public VoidDelegate onExit;
@@ -24,39 +31,26 @@ public class EventTriggerListener : UnityEngine.EventSystems.EventTrigger
 
 
     // 延迟时间，连续按的间隔时间 
-    protected float delayTime = 0.5f;
+    protected float delayTime = 0.2f;
 
     // 按钮最后一次是被按住状态时候的时间  
     private float startIsDownTime;
 
     private bool isDelayTime = true;
 
-    //public bool IsDelayTime
-    //{
-    //    get
-    //    {
-    //        return isDelayTime;
-    //    }
-
-    //    set
-    //    {
-    //        isDelayTime = value;
-    //    }
-    //}
-
-
-    static public EventTriggerListener Get(Component go, bool isDelayTime = true, float delayTime = 0.5f)
+    static public EventTriggerListener Get(Component go, bool isDelayTime = true, float delayTime = 0.2f)
     {
-        return EventTriggerListener.Get(go.gameObject, isDelayTime, delayTime);
+        return Get(go.gameObject, isDelayTime, delayTime);
     }
 
-    static public EventTriggerListener Get(GameObject go, bool isDelayTime = true, float delayTime = 0.5f)
+    static public EventTriggerListener Get(GameObject go, bool isDelayTime = true, float delayTime = 0.2f)
     {
         EventTriggerListener listener = go.GetComponent<EventTriggerListener>();
         if (listener == null)
         {
             listener = go.AddComponent<EventTriggerListener>();
         }
+        listener.startIsDownTime = 0;
         listener.delayTime = delayTime;
         listener.isDelayTime = isDelayTime;
         return listener;
@@ -65,40 +59,50 @@ public class EventTriggerListener : UnityEngine.EventSystems.EventTrigger
     public override void OnBeginDrag(PointerEventData eventData)
     {
         if (onBeginDrag != null) onBeginDrag(gameObject);
+        if (onBeginDragEventData != null) { onBeginDragEventData(gameObject, eventData); }
     }
     public override void OnDrag(PointerEventData eventData)
     {
         if (onDrag != null) onDrag(gameObject);
+        if (onDragEventData != null) { onDragEventData(gameObject, eventData); }
     }
     public override void OnEndDrag(PointerEventData eventData)
     {
         if (onEndDrag != null) onEndDrag(gameObject);
+        if (onEndDragEventData != null) { onEndDragEventData(gameObject, eventData); }
     }
 
     public override void OnPointerClick(PointerEventData eventData)
     {
-        if (isDelayTime)
-        {
-            if (Time.time - startIsDownTime > delayTime)
+        //if (isDelayTime)
+        //{
+            string tag = SuperInvoke.CreateTag();
+            SuperInvoke.Run(Click, delayTime, tag);
+            if (Time.time - startIsDownTime < delayTime && startIsDownTime!= 0)
             {
-                if (onClick != null)
-                {
-                    if (onBeforeClick != null) onBeforeClick(gameObject);
-                    onClick(gameObject);
-                    if (onAfterClick != null) onAfterClick(gameObject);
-                }
+                if (onDoubleClick != null) onDoubleClick(gameObject);
+                SuperInvoke.KillAll();
+            }
+            startIsDownTime = Time.time;
+        //}
+        //else
+        //{
+        //    if (onClick != null)
+        //    {
+        //        if (onBeforeClick != null) onBeforeClick(gameObject);
+        //        onClick(gameObject);
+        //        if (onAfterClick != null) onAfterClick(gameObject);
+        //    }
+        //}
+    }
 
-                startIsDownTime = Time.time + delayTime;
-            }
-        }
-        else
+    private void Click()
+    {
+        if (onClick != null)
         {
-            if (onClick != null)
-            {
-                if (onBeforeClick != null) onBeforeClick(gameObject);
-                onClick(gameObject);
-                if (onAfterClick != null) onAfterClick(gameObject);
-            }
+            if (onBeforeClick != null) onBeforeClick(gameObject);
+            onClick(gameObject);
+            if (onAfterClick != null) onAfterClick(gameObject);
         }
     }
 
