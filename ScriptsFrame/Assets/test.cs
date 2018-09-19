@@ -14,12 +14,18 @@ public class test : MonoBehaviour {
     public Transform cc;
     public RawImage rImg;
     public float[] dd;
+
+    public int a = 3;
+
 	// Use this for initialization
 	void Start () {
         //transform.IsChildOf(cc);
         EventTriggerListener.Get(rImg).onClick = OnClick;
         EventTriggerListener.Get(rImg, true, 0.2f).onDoubleClick = OnDoubleClick;
         //Debug.Log(MathHelpr.GetMaxLength(dd));
+
+        bool aa = a == 0 ? true : a > 3 ? true : false;
+        Debug.Log(aa);
     }
 
     private void OnClick(GameObject go)

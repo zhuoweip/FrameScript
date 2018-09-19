@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum ButtonAniType
+{
+    Null,
+    Scale,
+    Wave,
+}
+
 namespace UICore
 {
     public delegate void DelAfterHideUI();
@@ -21,6 +28,15 @@ namespace UICore
         public BaseUI()
         {
             uiId = (EUiId)Enum.Parse(typeof(EUiId), this.GetType().Name);
+            btnAniType = ButtonAniType.Scale;
+        }
+
+        protected ButtonAniType btnAniType;
+
+        public ButtonAniType BtnAniType
+        {
+            set { btnAniType = value; }
+            get { return btnAniType; }
         }
 
         #region 注册按钮动画
@@ -32,8 +48,20 @@ namespace UICore
             Button[] btns = transform.GetComponentsInChildren<Button>(true);
             for (int i = 0; i < btns.Length; i++)
             {
-                EventTriggerListener.Get(btns[i]).onDown = RegistDownAni;
-                EventTriggerListener.Get(btns[i]).onUp = RegistUpAni;
+                switch (btnAniType)
+                {
+                    case ButtonAniType.Null:
+                        break;
+                    case ButtonAniType.Scale:
+                        EventTriggerListener.Get(btns[i]).onDown = RegistDownAni;
+                        EventTriggerListener.Get(btns[i]).onUp = RegistUpAni;
+                        break;
+                    case ButtonAniType.Wave:
+                        btns[i].gameObject.AddComponent<MaterialButton>();
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 
