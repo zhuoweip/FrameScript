@@ -932,6 +932,16 @@ public static class LinqUtil
         }
     }
 
+    /// <summary>
+    /// 字典通过值获得键
+    /// </summary>
+    private static T1 GetKey<T1,T2>(this Dictionary<T1, T2> dic, T2 name)
+    {
+        var keyvaluepair = dic.SingleOrDefault(k => k.Value.Equals(name));
+        var key = keyvaluepair.Key;
+        return key;
+    }
+
     /// <summary>将多个规定数组合并成一个数组</summary>
     public static T[] Merge<T>(params T[][] sources)
     {

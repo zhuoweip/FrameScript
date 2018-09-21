@@ -41,7 +41,7 @@ namespace UICore
 
         protected virtual void OnDisable()
         {
-            RemoveListener();
+
         }
 
         protected virtual void RemoveListener()
@@ -56,8 +56,11 @@ namespace UICore
         protected virtual void OnGUI()
         { }
 
+        //因为实现转场效果的时候要隐藏BaseUI，所以RemoveListener放在OnDestoty
         protected virtual void OnDestroy()
-        { }
+        {
+            RemoveListener();
+        }
     }
 }
 

@@ -58,6 +58,8 @@ namespace UICore
 
         private void InitUIManager()
         {
+            if (CurrentId == EUiId.NullUI)
+                return;
             if (dicAllUI!=null)
             {
                 dicAllUI.Clear();
@@ -121,9 +123,10 @@ namespace UICore
                     baseUI.HideUI();
                     if (EventTypeName != null)
                         SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
-                    CurrentId = nextUiId;
+                    //CurrentId = nextUiId;
                     baseUI.ShowUI();
                 }
+                CurrentId = nextUiId;
             });
         }
 
