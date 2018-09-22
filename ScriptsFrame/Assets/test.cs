@@ -8,7 +8,7 @@ public class test : MonoBehaviour {
     public List<GameObject> list = new List<GameObject>();
     public AnimationCurve curve;
     private int aa = -1;
-    private int bb = 0;
+    private int bb = 10;
 
 
     public Transform cc;
