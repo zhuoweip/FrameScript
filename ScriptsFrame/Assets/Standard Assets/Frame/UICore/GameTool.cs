@@ -1449,13 +1449,14 @@ public static class LinqUtil
         List<T> templist = new List<T>(step);
         for (int i = 0; i < step; i++)
             templist.Add(list[i]);
-
         for (int i = 0; i < list.Count; i++)
         {
             if (i + step < list.Count)
                 list[i] = list[i + step];
             else
-                list[i] = templist[i - templist.Count - 1];
+            {
+                list[i] = templist[Mathf.Abs(list.Count - step - i)];
+            }
         }
         return list;
     }

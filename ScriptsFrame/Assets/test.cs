@@ -17,8 +17,11 @@ public class test : MonoBehaviour {
 
     public int a = 3;
 
+    public List<int> list1 = new List<int>();
+
 	// Use this for initialization
 	void Start () {
+
         //transform.IsChildOf(cc);
         EventTriggerListener.Get(rImg).onClick = OnClick;
         EventTriggerListener.Get(rImg, true, 0.2f).onDoubleClick = OnDoubleClick;
@@ -46,11 +49,16 @@ public class test : MonoBehaviour {
     void Update () {
         if (Input.GetKeyDown(KeyCode.A))
         {
-            Dictionary<string,int> dic =  StringUtil.CountWords(d, "A");
-            foreach (var item in dic)
+            LinqUtil.Forward(list1);
+            for (int i = 0; i < list1.Count; i++)
             {
-                Debug.Log(item);
+                Debug.Log(list1[i]);
             }
+            //Dictionary<string,int> dic =  StringUtil.CountWords(d, "A");
+            //foreach (var item in dic)
+            //{
+            //    Debug.Log(item);
+            //}
 
             //LinqUtil.ArrayPop(ref dd);
             //foreach (var item in dd)
@@ -70,7 +78,12 @@ public class test : MonoBehaviour {
         }
         else if(Input.GetKeyDown(KeyCode.D))
         {
-            Debug.LogError(MathHelpr.BaseStringToNumber(d));
+            LinqUtil.Back(list1,1);
+            for (int i = 0; i < list1.Count; i++)
+            {
+                Debug.Log(list1[i]);
+            }
+            //Debug.LogError(MathHelpr.BaseStringToNumber(d));
             //list.Back(2);
             //for (int i = 0; i < list.Count; i++)
             //{
