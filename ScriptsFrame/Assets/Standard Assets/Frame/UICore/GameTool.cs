@@ -1484,6 +1484,52 @@ public static class LinqUtil
         return list;
     }
 
+    /// <summary>向前移动N位</summary>
+    public static T[] Forward<T>(T[] Arrary, int step = 1)
+    {
+        if (step >= Arrary.Length || step == 0)
+        {
+            Debug.LogError("移动无效");
+            return Arrary;
+        }
+
+        List<T> templist = new List<T>(step);
+        for (int i = 0; i < step; i++)
+            templist.Add(Arrary[i]);
+
+        for (int i = 0; i < Arrary.Length; i++)
+        {
+            if (i + step < Arrary.Length)
+                Arrary[i] = Arrary[i + step];
+            else
+                Arrary[i] = templist[Mathf.Abs(Arrary.Length - step - i)];
+        }
+        return Arrary;
+    }
+
+    /// <summary>向后滚动N位</summary>
+    public static T[] Back<T>(T[] Arrary, int step = 1)
+    {
+        if (step >= Arrary.Length || step == 0)
+        {
+            Debug.LogError("移动无效");
+            return Arrary;
+        }
+
+        List<T> templist = new List<T>(step);
+        for (int i = Arrary.Length - step; i < Arrary.Length; i++)
+            templist.Add(Arrary[i]);
+
+        for (int i = Arrary.Length - 1; i >= 0; i--)
+        {
+            if (i >= step)
+                Arrary[i] = Arrary[i - step];
+            else
+                Arrary[i] = templist[i];
+        }
+        return Arrary;
+    }
+
     public static List<T> ToList<T>(T[] array)
     {
         return array.ToList();
@@ -1659,6 +1705,25 @@ public static class LinqUtil
             }
         }
         return array;
+    }
+
+    /// <summary>
+    /// list，Arrary 排序
+    /// </summary>
+    /// <returns></returns>
+    //var xxxx = LinqUtil.OrderBy(list.ToArray(), item => item.name);
+    public static IEnumerable<T> OrderBy<T>(T[] Arrary,Func<T,string>keySelector) where T : UnityEngine.Object
+    {
+        return Arrary.OrderBy(keySelector);
+    }
+
+    /// <summary>
+    /// 复制 克隆 数组 浅拷贝
+    /// </summary>
+    public static T[] Clone<T>(T[] Arrary)
+    {
+        T[] clone = (T[])Arrary.Clone();
+        return clone;
     }
 
     #region 排序算法

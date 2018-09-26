@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class test : MonoBehaviour {
 
     public List<GameObject> list = new List<GameObject>();
+    
     public AnimationCurve curve;
     private int aa = -1;
     private int bb = 10;
@@ -29,7 +30,15 @@ public class test : MonoBehaviour {
 
         bool aa = a == 0 ? true : a > 3 ? true : false;
         Debug.Log(aa);
+
+        var xxxx = LinqUtil.OrderBy(list.ToArray(), item => item.name);
+        foreach (var item in xxxx)
+        {
+            Debug.Log(item);
+        }
     }
+
+    public GameObject[] ccc;
 
     private void OnClick(GameObject go)
     {
