@@ -121,6 +121,8 @@ public class AutoCoding : Editor
     public const string imgStr = "Image";
     /// <summary>"Button"</summary>
     public const string btnStr = "Button";
+    /// <summary>"Transform"</summary>
+    public const string transformStr = "Transform";
     /// <summary>"using UnityEngine.UI;"</summary>
     public const string usingUIStr = "using UnityEngine.UI;";
     /// <summary>"BaseUI"</summary>
@@ -131,6 +133,8 @@ public class AutoCoding : Editor
     public const string RegistBtnsStr = "base.RegistBtns();";
     /// <summary>"GameToolGetTheChildComponent"</summary>
     public const string GetTheChildComponent = " = GameTool.GetTheChildComponent<";
+
+    public const string FindTheChild = " = GameTool.FindTheChild";
 
     /// <summary>添加脚本</summary>
     private static void AddMono(string foldePath, RawImage rImg, Image img, Button btn, string selectName, string path)
@@ -156,7 +160,7 @@ public class AutoCoding : Editor
             }
             if (lines[i].Contains(baseUIStr))
             {
-                if (rImg != null && !IsHaveLine(lines, selectName + "rImg"))
+                if (rImg != null && !IsHaveLine(lines, selectName + "rImg") && btn == null)
                 {
                     string line = rawImageStr + " " + selectName + "rImg";
                     lines[i - 1] += Environment.NewLine + nonPublicStr + " " + line + ";";//i - 1在上面添加行
@@ -172,15 +176,23 @@ public class AutoCoding : Editor
             }
             if (lines[i].Contains(baseUIStr))
             {
-                if (img != null && !IsHaveLine(lines, selectName + "Img"))
+                if (img != null && !IsHaveLine(lines, selectName + "Img") && btn == null)
                 {
                     string line = imgStr + " " + selectName + "Img";
                     lines[i - 1] += Environment.NewLine + nonPublicStr + " " + line + ";";
                 }
             }
+            if (lines[i].Contains(baseUIStr))
+            {
+                if (!IsHaveLine(lines,selectName + "Trans") && btn == null && rImg == null && img == null)
+                {
+                    string line = transformStr + " " + selectName + "Trans";
+                    lines[i - 1] += Environment.NewLine + nonPublicStr + " " + line + ";";
+                }
+            }
             if (lines[i].Contains(InitUiOnAwakeStr))
             {
-                if (rImg != null && !IsHaveLine(lines, selectName + "rImg" + " = GameTool"))
+                if (rImg != null && !IsHaveLine(lines, selectName + "rImg" + " = GameTool") && btn == null)
                 {
                     string line = selectName + "rImg" + GetTheChildComponent + rawImageStr + ">" +
                     "(gameObject," + "\"" + path + "\"" + ");";
@@ -189,7 +201,7 @@ public class AutoCoding : Editor
             }
             if (lines[i].Contains(InitUiOnAwakeStr))
             {
-                if (img != null && !IsHaveLine(lines, selectName + "Img" + " = GameTool"))
+                if (img != null && !IsHaveLine(lines, selectName + "Img" + " = GameTool") && btn == null)
                 {
                     string line = selectName + "Img" + GetTheChildComponent + imgStr + ">" +
                     "(gameObject," + "\"" + path + "\"" + ");";
@@ -201,6 +213,15 @@ public class AutoCoding : Editor
                 if (btn != null && !IsHaveLine(lines, selectName + "btn" + " = GameTool"))
                 {
                     string line = selectName + "btn" + GetTheChildComponent + btnStr + ">" +
+                    "(gameObject," + "\"" + path + "\"" + ");";
+                    lines[i] += Environment.NewLine + line;
+                }
+            }
+            if (lines[i].Contains(InitUiOnAwakeStr))
+            {
+                if (!IsHaveLine(lines, selectName + "Trans" + " = GameTool") && btn == null && rImg == null && img == null)
+                {
+                    string line = selectName + "Trans" + FindTheChild +
                     "(gameObject," + "\"" + path + "\"" + ");";
                     lines[i] += Environment.NewLine + line;
                 }
