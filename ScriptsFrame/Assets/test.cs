@@ -31,11 +31,16 @@ public class test : MonoBehaviour {
         bool aa = a == 0 ? true : a > 3 ? true : false;
         Debug.Log(aa);
 
-        var xxxx = LinqUtil.OrderBy(list.ToArray(), item => item.name);
+        var xxxx = LinqUtil.OrderBy<GameObject,string,Vector3,string>(list.ToArray(), item => item.name,item=>item.transform.localScale);
         foreach (var item in xxxx)
         {
             Debug.Log(item);
         }
+    }
+
+    private void GetFrameTexture()
+    {
+
     }
 
     public GameObject[] ccc;

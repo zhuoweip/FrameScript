@@ -1708,13 +1708,33 @@ public static class LinqUtil
     }
 
     /// <summary>
-    /// list，Arrary 排序
+    /// 队列Queue 平滑
+    /// </summary>
+    /// <param name="queue"></param>
+    /// <param name="data"></param>
+    /// <param name="maxCount = 100"></param>
+    /// <returns></returns>
+    public static Vector3 QueueAverage(ref Queue<Vector3> queue, Vector3 data,int maxCount)
+    {
+        queue.Enqueue(data);
+        if (queue.Count > maxCount)
+            queue.Dequeue();
+        Vector3 pos = Vector3.zero;
+        foreach (var item in queue)
+            pos += item;
+        Vector3 averagePos = pos / queue.Count;
+        pos = Vector3.zero;
+        return averagePos;
+    }
+
+    /// <summary>
+    /// list，Arrary 复合排序
     /// </summary>
     /// <returns></returns>
-    //var xxxx = LinqUtil.OrderBy(list.ToArray(), item => item.name);
-    public static IEnumerable<T> OrderBy<T>(T[] Arrary,Func<T,string>keySelector) where T : UnityEngine.Object
+    //var xxxx = LinqUtil.OrderBy<GameObject,string,Vector3,string>(list.ToArray(), item => item.name,item=>item.transform.localScale);
+    public static IEnumerable<T> OrderBy<T,T1,T2,T3>(T[] Arrary,Func<T,T1>keySelector1, Func<T, T2> keySelector2 = null, Func<T, T3> keySelector3 = null) where T : UnityEngine.Object
     {
-        return Arrary.OrderBy(keySelector);
+        return Arrary.OrderBy(keySelector1).ThenBy(keySelector2).ThenBy(keySelector3);
     }
 
     /// <summary>
