@@ -63,11 +63,13 @@ public class test : MonoBehaviour {
     void Update () {
         if (Input.GetKeyDown(KeyCode.A))
         {
-            LinqUtil.Forward(list1);
-            for (int i = 0; i < list1.Count; i++)
-            {
-                Debug.Log(list1[i]);
-            }
+           
+
+            //LinqUtil.Forward(list1);
+            //for (int i = 0; i < list1.Count; i++)
+            //{
+            //    Debug.Log(list1[i]);
+            //}
             //Dictionary<string,int> dic =  StringUtil.CountWords(d, "A");
             //foreach (var item in dic)
             //{
@@ -115,5 +117,8 @@ public class test : MonoBehaviour {
     public RectTransform trans;
     public RectTransform trans2;
 
-    
+    private void OnApplicationQuit()
+    {
+
+    }
 }

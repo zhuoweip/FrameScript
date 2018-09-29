@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System;
 using CommandTerminal;
+using System.Diagnostics;
 
 namespace UICore
 {
     [RequireComponent(typeof(Terminal))]
     public class GameManager : UnitySingleton<GameManager>
     {
+        private Process[] processes;
+
         protected override void Update()
         {
             base.Update();
@@ -15,6 +17,15 @@ namespace UICore
             if (Input.GetKeyDown(KeyCode.F12)) { Time.timeScale = 50; }
             else if (Input.GetKeyUp(KeyCode.F12)) { Time.timeScale = 1; }
             else if (Input.GetKeyDown(KeyCode.F11)){Time.timeScale = 0; }
+            #endregion
+
+            #region KeyBoard
+            processes = Process.GetProcessesByName("osk");
+            if (Input.GetKeyDown(KeyCode.F7))
+            {
+                if (processes.Length == 0)
+                    Process.Start(@"C:\Windows\System32\osk.exe");
+            }
             #endregion
         }
 

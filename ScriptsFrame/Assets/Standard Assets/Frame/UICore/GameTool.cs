@@ -4140,4 +4140,17 @@ public static class Util
         local = nullable1;
     }
 }
+
+public static class DebugUtil
+{
+    public static void Log(object message)
+    {
+        Debug.Log(message);
+    }
+
+    public static void LogError(object message)
+    {
+        Debug.LogError(message);
+    }
+}
 #endregion

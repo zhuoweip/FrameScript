@@ -1,11 +1,10 @@
-﻿//by 李红伟
-
-Shader "Hidden/CircleWipe"
+﻿Shader "Custom/CircleWipe"
 {
 	Properties
 	{
 		_MainTex("MainTex",2d)="white"{}
 		_Value("Value",float)=0
+		_Color("Color",Color) = (1,1,1,1)
 	}
 
 	SubShader
@@ -16,12 +15,15 @@ Shader "Hidden/CircleWipe"
             "Queue"="Overlay"
             "RenderType"="Overlay"
         }
-		Blend ScrAlpha OneMinusSrcAlpha
+		
 		// No culling or depth
-		Cull Off ZWrite Off ZTest Always
+		Cull Off ZWrite Off ZTest Always 
+			Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
+			
+
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -50,6 +52,7 @@ Shader "Hidden/CircleWipe"
 
 			sampler2D _MainTex;
 			uniform float _Value;
+			fixed4 _Color;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
@@ -66,13 +69,9 @@ Shader "Hidden/CircleWipe"
 				//_Value*2表示放大2倍，为了使脚本上的调节从0-1
 				_Value*=2;
 				fixed4 mask=length(uv2);
-				mask=1-step(_Value,mask);
+				mask=/*1-*/step(_Value,mask);
 
-				c=screen*mask;
-				if (c.r + c.g + c.b > 0)
-				{
-					c.a = 0;
-				}
+				c=screen*mask*_Color;
 				return c;
 			}
 			ENDCG
