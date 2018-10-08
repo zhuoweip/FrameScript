@@ -13,7 +13,8 @@ public class testLerp : MonoBehaviour {
     {
         if (Input.GetKeyDown(KeyCode.A))
         {
-            
+            GameObject go = new GameObject();
+            go.AddComponent<SMPostEffectsTransition>();
         }
 
         //Vector3 vc = new Vector3(Random.Range(50, 100), 0, 0);

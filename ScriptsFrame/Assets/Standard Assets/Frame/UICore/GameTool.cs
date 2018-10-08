@@ -643,7 +643,7 @@ public sealed class MathHelpr
     /// <summary>获取数组内最大元素的十进制位数(仅适用整型)</summary>
     public static int GetMaxLength(int[] arr)
     {
-        int num = -2147483648;
+        int num = int.MinValue;
         for (int i = 0; i < arr.Length; i++)
         {
             int num2 = arr[i];
@@ -654,6 +654,42 @@ public sealed class MathHelpr
             }
         }
         return num.ToString().Length;
+    }
+
+    /// <summary>
+    /// 最大Int
+    /// </summary>
+    /// <returns></returns>
+    public static int IntegerMAX()
+    {
+        return int.MaxValue;
+    }
+
+    /// <summary>
+    /// 最小Int
+    /// </summary>
+    /// <returns></returns>
+    public static int IntegerMin()
+    {
+        return int.MinValue;
+    }
+
+    /// <summary>
+    /// 正无穷大
+    /// </summary>
+    /// <returns></returns>
+    public static float MaxInfinity()
+    {
+        return float.PositiveInfinity;
+    }
+
+    /// <summary>
+    /// 负无穷大
+    /// </summary>
+    /// <returns></returns>
+    public static float MinInfinity()
+    {
+        return float.NegativeInfinity;
     }
 }
 

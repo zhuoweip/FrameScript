@@ -36,11 +36,11 @@ public class SMPostEffectsTransition : MonoBehaviour {
         rawImage.material = material;
         if (inAction != null)
             inAction();
-        material.DOFloat(1, "_Value", duration).OnComplete(() =>
+        material.DOFloat(0, "_Value", duration).OnComplete(() =>
           {
               if (holdAction != null)
                   holdAction();
-              material.DOFloat(0, "_Value", duration).OnComplete(()=>
+              material.DOFloat(1, "_Value", duration).OnComplete(()=>
               {
                   Destroy(gameObject);
               });
