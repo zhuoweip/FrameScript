@@ -1,6 +1,7 @@
 using System.Text;
 using System.Diagnostics;
 using UnityEngine;
+using JacobGames.SuperInvoke;
 
 namespace CommandTerminal
 {
@@ -97,6 +98,63 @@ namespace CommandTerminal
             }
 
             return sb.ToString();
+        }
+
+        [RegisterCommand(Help = "Open Osk KeyBoard")]
+        static void CommandOpenOSK(CommandArg[] args)
+        {
+            //这边操作必须要先把鼠标移开才能操作，不然会直接输入
+            KeyBoardEvent.DoMouseClick(Screen.width/2, Screen.height/2);
+            //SuperInvoke.SkipFrames 等待帧数
+            SuperInvoke.SkipFrames(1, () => {KeyBoardEvent.ClickFNum(118);
+                //鼠标恢复原位
+                KeyBoardEvent.DoMouseClick(KeyBoardEvent.lastPoint.X, KeyBoardEvent.lastPoint.Y);
+            });
+        }
+
+        //[RegisterCommand(Help = "Drag The Window")]
+        //static void CommandDrag(CommandArg[] args)
+        //{
+        //    KeyBoardEvent.DoMouseClick(Screen.width / 2, Screen.height / 2);
+        //    SuperInvoke.SkipFrames(1, () => { KeyBoardEvent.ClickFNum(119);
+        //        KeyBoardEvent.DoMouseClick(KeyBoardEvent.lastPoint.X, KeyBoardEvent.lastPoint.Y);
+        //    });
+        //}
+
+        [RegisterCommand(Help = "Show RightDown Debug")]
+        static void CommandDebug(CommandArg[] args)
+        {
+            KeyBoardEvent.DoMouseClick(Screen.width / 2, Screen.height / 2);
+            SuperInvoke.SkipFrames(1, () => { KeyBoardEvent.ClickFNum(120);
+                KeyBoardEvent.DoMouseClick(KeyBoardEvent.lastPoint.X, KeyBoardEvent.lastPoint.Y);
+            });
+        }
+
+        [RegisterCommand(Help = "Show FPS")]
+        static void CommandFPS(CommandArg[] args)
+        {
+            KeyBoardEvent.DoMouseClick(Screen.width / 2, Screen.height / 2);
+            SuperInvoke.SkipFrames(1, () => { KeyBoardEvent.ClickFNum(121);
+                KeyBoardEvent.DoMouseClick(KeyBoardEvent.lastPoint.X, KeyBoardEvent.lastPoint.Y);
+            });
+        }
+
+        [RegisterCommand(Help = "TimeScale = 0")]
+        static void CommandPause(CommandArg[] args)
+        {
+            KeyBoardEvent.DoMouseClick(Screen.width / 2, Screen.height / 2);
+            SuperInvoke.SkipFrames(1, () => { KeyBoardEvent.ClickFNum(122);
+                KeyBoardEvent.DoMouseClick(KeyBoardEvent.lastPoint.X, KeyBoardEvent.lastPoint.Y);
+            });
+        }
+
+        [RegisterCommand(Help = "TimeScale = 1 or 50")]
+        static void CommandSpeed(CommandArg[] args)
+        {
+            KeyBoardEvent.DoMouseClick(Screen.width / 2, Screen.height / 2);
+            SuperInvoke.SkipFrames(1, () => { KeyBoardEvent.ClickFNum(123);
+                KeyBoardEvent.DoMouseClick(KeyBoardEvent.lastPoint.X, KeyBoardEvent.lastPoint.Y);
+            });
         }
     }
 }
