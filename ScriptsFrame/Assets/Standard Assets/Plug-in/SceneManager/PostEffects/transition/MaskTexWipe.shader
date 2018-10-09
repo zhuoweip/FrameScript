@@ -1,12 +1,10 @@
-﻿//by 李红伟
-
-Shader "Hidden/MaskTexWipe"
+﻿Shader "Scene Manager/MaskTexWipe"
 {
 	Properties
 	{
 		_MainTex("MainTex",2d)="white"{}
 		_MaskTex ("MaskTex",2D)="white"{}
-		_Value("Value",float)=0
+		_Value("Value",Range(0,1))=1
 	}
 	SubShader
 	{
@@ -17,6 +15,7 @@ Shader "Hidden/MaskTexWipe"
         }
 		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -60,7 +59,8 @@ Shader "Hidden/MaskTexWipe"
 				//采样dissolve贴图
 				float4 dissolve=tex2D(_MaskTex,i.uv);
 
-				col=screen*step(_Value,dissolve.r);
+				col=screen*step(1-_Value,dissolve.r);
+				col.a = cos(col.r + col.g + col.b);
 				return col;
 			}
 			ENDCG

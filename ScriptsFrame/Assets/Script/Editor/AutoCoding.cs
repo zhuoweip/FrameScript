@@ -163,7 +163,7 @@ public class AutoCoding : Editor
                 if (rImg != null && !IsHaveLine(lines, selectName + "rImg") && btn == null)
                 {
                     string line = rawImageStr + " " + selectName + "rImg";
-                    lines[i - 1] += Environment.NewLine + nonPublicStr + " " + line + ";";//i - 1在上面添加行
+                    lines[i - 1] += Environment.NewLine + "\t" + nonPublicStr + " " + line + ";";//i - 1在上面添加行
                 }
             }
             if (lines[i].Contains(baseUIStr))
@@ -171,7 +171,7 @@ public class AutoCoding : Editor
                 if (btn != null && !IsHaveLine(lines, selectName + "btn"))
                 {
                     string line = btnStr + " " + selectName + "btn";
-                    lines[i - 1] += Environment.NewLine + nonPublicStr + " " + line + ";";
+                    lines[i - 1] += Environment.NewLine + "\t" + nonPublicStr + " " + line + ";";
                 }
             }
             if (lines[i].Contains(baseUIStr))
@@ -179,7 +179,7 @@ public class AutoCoding : Editor
                 if (img != null && !IsHaveLine(lines, selectName + "Img") && btn == null)
                 {
                     string line = imgStr + " " + selectName + "Img";
-                    lines[i - 1] += Environment.NewLine + nonPublicStr + " " + line + ";";
+                    lines[i - 1] += Environment.NewLine + "\t" + nonPublicStr + " " + line + ";";
                 }
             }
             if (lines[i].Contains(baseUIStr))
@@ -187,7 +187,7 @@ public class AutoCoding : Editor
                 if (!IsHaveLine(lines,selectName + "Trans") && btn == null && rImg == null && img == null)
                 {
                     string line = transformStr + " " + selectName + "Trans";
-                    lines[i - 1] += Environment.NewLine + nonPublicStr + " " + line + ";";
+                    lines[i - 1] += Environment.NewLine + "\t" + nonPublicStr + " " + line + ";";
                 }
             }
             if (lines[i].Contains(InitUiOnAwakeStr))
@@ -196,7 +196,7 @@ public class AutoCoding : Editor
                 {
                     string line = selectName + "rImg" + GetTheChildComponent + rawImageStr + ">" +
                     "(gameObject," + "\"" + path + "\"" + ");";
-                    lines[i] += Environment.NewLine + line;
+                    lines[i] += Environment.NewLine + "\t\t" + line;
                 }
             }
             if (lines[i].Contains(InitUiOnAwakeStr))
@@ -205,7 +205,7 @@ public class AutoCoding : Editor
                 {
                     string line = selectName + "Img" + GetTheChildComponent + imgStr + ">" +
                     "(gameObject," + "\"" + path + "\"" + ");";
-                    lines[i] += Environment.NewLine + line;
+                    lines[i] += Environment.NewLine + "\t\t" + line;
                 }
             }
             if (lines[i].Contains(InitUiOnAwakeStr))
@@ -214,7 +214,7 @@ public class AutoCoding : Editor
                 {
                     string line = selectName + "btn" + GetTheChildComponent + btnStr + ">" +
                     "(gameObject," + "\"" + path + "\"" + ");";
-                    lines[i] += Environment.NewLine + line;
+                    lines[i] += Environment.NewLine + "\t\t" + line;
                 }
             }
             if (lines[i].Contains(InitUiOnAwakeStr))
@@ -223,14 +223,14 @@ public class AutoCoding : Editor
                 {
                     string line = selectName + "Trans" + FindTheChild +
                     "(gameObject," + "\"" + path + "\"" + ");";
-                    lines[i] += Environment.NewLine + line;
+                    lines[i] += Environment.NewLine + "\t\t" + line;
                 }
             }
             if (lines[i].Contains(RegistBtnsStr))
             {
                 if (btn != null && !IsHaveLine(lines, selectName + "btn" + ".onClick"))
                 {
-                    lines[i] += Environment.NewLine + selectName + "btn" + ".onClick.AddListener(() => { });";
+                    lines[i] += Environment.NewLine + "\t\t" + selectName + "btn" + ".onClick.AddListener(() => { });";
                 }
             }
         }

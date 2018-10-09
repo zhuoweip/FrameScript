@@ -1,12 +1,10 @@
-﻿//by 李红伟
-
-Shader "Hidden/ShutterWipe"
+﻿Shader "Scene Manager/ShutterWipe"
 {
 	Properties
 	{
 		_MainTex("MainTex",2d)="white"{}
-		_Value("Value",float)=0
-		_Amount("Amount",int)=0
+		_Value("Value",Range(0,1))=1
+		_Amount("Amount",int)=10
 		_Direction("Direction",int)=0
 	}
 	SubShader
@@ -19,6 +17,7 @@ Shader "Hidden/ShutterWipe"
         }
 		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -75,9 +74,9 @@ Shader "Hidden/ShutterWipe"
 
 				fixed4 mask=fixed4(dir,dir,dir,1);
 
-				mask=step(_Value,mask);
+				mask=step(1-_Value,mask);
 				c=screen*mask;
-
+				c.a = cos(c.r + c.g + c.b);
 				return c;
 			}
 			ENDCG

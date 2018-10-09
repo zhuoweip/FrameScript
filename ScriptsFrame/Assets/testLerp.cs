@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using CommandTerminal;
 
 public class testLerp : MonoBehaviour {
 
@@ -11,10 +12,12 @@ public class testLerp : MonoBehaviour {
 
     private void Update()
     {
+        AA();
+        
         if (Input.GetKeyDown(KeyCode.A))
         {
-            GameObject go = new GameObject();
-            go.AddComponent<SMPostEffectsTransition>();
+            BB();
+            //SMPostEffectsTransition smtranstion = GameObject.Instantiate(Resources.Load<GameObject>("Transitions/SMPostEffectsTransition")).GetComponent<SMPostEffectsTransition>();
         }
 
         //Vector3 vc = new Vector3(Random.Range(50, 100), 0, 0);
@@ -28,5 +31,18 @@ public class testLerp : MonoBehaviour {
         ////pos = Vector3.zero;
         //rImg.transform.localPosition = LinqUtil.QueueAverage(ref queue,vc,500);
         ////rImg.transform.localPosition = Vector3.Lerp(rImg.transform.localPosition, averagePos, Time.deltaTime * 4f);
+    }
+
+    private int index;
+    private void AA()
+    {
+        GameDebugLog.Log(index.ToString());
+        index++;
+    }
+
+    [RegisterCommand]
+    private void BB()
+    {
+        Debug.Log(index);
     }
 }

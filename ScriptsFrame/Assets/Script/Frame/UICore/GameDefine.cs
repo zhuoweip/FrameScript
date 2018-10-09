@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace UICore
 {
@@ -7,7 +7,9 @@ namespace UICore
         NullUI,
         MainUI,
         GameAUI,
-        GameBUI
+        GameBUI,
+        FindUI,
+		MalekUI,
     }
 
     public class GameDefine
@@ -16,6 +18,8 @@ namespace UICore
 
         public static Dictionary<EUiId, string> dicPath = new Dictionary<EUiId, string>
         {
+			{ EUiId.MalekUI,"UIPrefab/"+"MalekUI"},
+			{ EUiId.FindUI,"UIPrefab/"+"FindUI"},
             { EUiId.MainUI,"UIPrefab/"+"MainUI"},
             { EUiId.GameAUI,"UIPrefab/"+"GameAUI"},
             { EUiId.GameBUI,"UIPrefab/"+"GameBUI"},

@@ -1,14 +1,13 @@
-﻿//by 李红伟
-
-Shader "Hidden/ClockWipe"
+﻿Shader "Scene Manager/ClockWipe"
 {
 	Properties
 	{
 		_MainTex("MainTex",2d)="white"{}
-		_Value("Value",float)=0
+		_Value("Value",Range(0,1))=1
 //		[KeywordEnum(Clockwise, CounterClockwise)] _Enum ("Direction", Float) = 0
 		//通过此值来判定是顺时针还是逆时针
 		_Direction("Direction",float)=0
+		_Color("Color",Color) = (0,0,0,1)
 	}
 	SubShader
 	{
@@ -19,6 +18,7 @@ Shader "Hidden/ClockWipe"
         }
 		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -52,6 +52,7 @@ Shader "Hidden/ClockWipe"
 			sampler2D _MainTex;
 			uniform float _Value;
 			uniform float _Direction;
+			float4 _Color;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
@@ -81,9 +82,10 @@ Shader "Hidden/ClockWipe"
 
                 float4 mask = float4(polar,polar,polar,1);
 
-				mask=step(_Value,mask);
+				mask=step(1 - _Value,mask);
 				c=screen*mask;
-
+				c.a = cos(c.r + c.g + c.b);
+				//sign(x)：如果 x 大于 0，返回 1；如果 x 小于 0，则返回 0。 cos相反
 				return c;
 			}
 			ENDCG

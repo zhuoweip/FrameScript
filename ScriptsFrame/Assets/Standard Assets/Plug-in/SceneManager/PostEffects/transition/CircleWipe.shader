@@ -1,10 +1,10 @@
-﻿Shader "Custom/CircleWipe"
+﻿Shader "Scene Manager/CircleWipe"
 {
 	Properties
 	{
 		_MainTex("MainTex",2d)="white"{}
-		_Value("Value",float)=0
-		_Color("Color",Color) = (1,1,1,1)
+		_Value("Value",float) = 1
+		_Color("Color",Color) = (0,0,0,1)
 	}
 
 	SubShader
@@ -18,7 +18,7 @@
 		
 		// No culling or depth
 		Cull Off ZWrite Off ZTest Always 
-			Blend SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -67,7 +67,7 @@
 				fixed2 uv2=(i.uv*_ScreenParams-0.5*_ScreenParams)/_ScreenParams.y;
 
 				//_Value*2表示放大2倍，为了使脚本上的调节从0-1
-				_Value*=2;
+				//_Value*=2;
 				fixed4 mask=length(uv2);
 				mask=/*1-*/step(_Value,mask);
 

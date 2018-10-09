@@ -35,8 +35,8 @@ namespace CommandTerminal
         [SerializeField] string ToggleFullHotkey  = "#`";
         [SerializeField] int BufferSize           = 512;
         [SerializeField]
-        [Range(50,100)]
-        int SizeScale = 50;
+        [Range(30,100)]//help显示的字体大小
+        int SizeScale = 30;
 
         [Header("Input")]
         [SerializeField] Font ConsoleFont;
@@ -150,7 +150,7 @@ namespace CommandTerminal
 
         void Start() {
             if (ConsoleFont == null) {
-                ConsoleFont = Font.CreateDynamicFontFromOSFont("Courier New", 16);
+                ConsoleFont = Font.CreateDynamicFontFromOSFont("Arial", 16);//Courier New
                 Debug.LogWarning("Command Console Warning: Please assign a font.");
             }
 
@@ -222,7 +222,8 @@ namespace CommandTerminal
             input_style = new GUIStyle();
             input_style.padding = new RectOffset(4, 4, 4, 4);
             input_style.font = ConsoleFont;
-            input_style.fixedHeight = ConsoleFont.fontSize * 1.6f;
+            input_style.fontSize = ConsoleFont.fontSize * 3;//命令栏文字大小
+            input_style.fixedHeight = ConsoleFont.fontSize * 1.6f * 3;//命令栏背景框大小
             input_style.normal.textColor = InputColor;
 
             var dark_background = new Color();

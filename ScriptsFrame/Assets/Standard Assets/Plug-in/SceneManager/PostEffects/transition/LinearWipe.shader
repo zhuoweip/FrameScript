@@ -1,12 +1,11 @@
-﻿//by 李红伟
-
-Shader "Hidden/LinearWipe"
+﻿Shader "Scene Manager/LinearWipe"
 {
 	Properties
 	{
 		_MainTex("MainTex",2d)="white"{}
 		_Angle("_Angle",float)=0
-		_Value("Value",float)=0
+		_Value("Value",Range(0,1))=1
+		_Color("Color",Color) = (0,0,0,1)
 	}
 
 	SubShader
@@ -19,6 +18,7 @@ Shader "Hidden/LinearWipe"
         }
 		// No culling or depth
 		Cull Off ZWrite Off ZTest Always
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -56,6 +56,7 @@ Shader "Hidden/LinearWipe"
 			sampler2D _MainTex;
 			uniform float _Value;
 			uniform float _Angle;
+			float4 _Color;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
@@ -67,9 +68,9 @@ Shader "Hidden/LinearWipe"
 				fixed4 y=fixed4(i.uv.y,i.uv.y,i.uv.y,1);
 
 				fixed4 mask=lerp(x,y,_Angle);
-				mask=step(_Value,mask);
+				mask=step(1-_Value,mask);
 				c=screen*mask;
-
+				c.a = cos(c.r + c.g + c.b);
 				return c;
 			}
 			ENDCG

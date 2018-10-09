@@ -38,7 +38,7 @@ namespace SubjectNerd.QuickToggle
         /// <summary>
         /// 显示锁定隐藏
         /// </summary>
-        [MenuItem(MENU_NAME + " _%#_ W", false, 1)]
+        [MenuItem(MENU_NAME + " _%#_ E", false, 1)]
         private static void QuickToggleMenu()
         {
             bool toggle = EditorPrefs.GetBool(PrefKeyShowToggle);
@@ -46,7 +46,7 @@ namespace SubjectNerd.QuickToggle
             Menu.SetChecked(MENU_NAME, !toggle);
         }
 
-        [MenuItem(MENU_NAME + " _%#_ W", true)]
+        [MenuItem(MENU_NAME + " _%#_ E", true)]
         private static bool SetupMenuCheckMarks()
         {
             Menu.SetChecked(MENU_NAME, EditorPrefs.GetBool(PrefKeyShowToggle));
