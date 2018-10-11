@@ -4,11 +4,29 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
 using CommandTerminal;
+using System;
 
 public class testLerp : MonoBehaviour {
 
     Queue<Vector3> queue = new Queue<Vector3>();
     public RawImage rImg;
+
+    private IEnumerator Wait()
+    {
+        while (index < 200)
+        {
+            Debug.LogError(index);
+            yield return 0;
+        }
+ 
+        Debug.LogError(1111111);
+    }
+
+    private void Start()
+    {
+        Debug.Log(tips);
+        //StartCoroutine(Wait());
+    }
 
     private void Update()
     {
@@ -36,7 +54,7 @@ public class testLerp : MonoBehaviour {
     private int index;
     private void AA()
     {
-        GameDebugLog.Log(index.ToString());
+        Debug.Log(index.ToString());
         index++;
     }
 
@@ -44,5 +62,17 @@ public class testLerp : MonoBehaviour {
     private void BB()
     {
         Debug.Log(index);
+    }
+
+    static bool test_name = true;
+    string tips = Extend.GetVarName(test_name,it => test_name);
+    
+}
+
+public static class Extend
+{
+    public static string GetVarName<T>(this T var_name, System.Linq.Expressions.Expression<Func<T, T>> exp)
+    {
+        return ((System.Linq.Expressions.MemberExpression)exp.Body).Member.Name;
     }
 }

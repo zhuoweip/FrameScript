@@ -151,4 +151,41 @@ public class EditorTool : Editor {
             //System.Diagnostics.Process.Start("notepad++", "E://UGUI_Temp.txt");
         }
     }
+
+
+    [MenuItem("GameObject/Tool/对齐相机和Canvas ", false, -1)]
+    static void CameraCanvasAlign()
+    {
+        GameObject[] gameObjs = Selection.gameObjects;
+        if (gameObjs.Length != 2)
+        {
+            Debug.LogError("selectionObjs is Not 2");
+            return;
+        }
+        Camera camera = GetComponent<Camera>(gameObjs);
+        Canvas canvas = GetComponent<Canvas>(gameObjs);
+        if (!camera || !canvas)
+        {
+            Debug.LogError("No camera or canvas");
+            return;
+        }
+ 
+        camera.transform.position = canvas.transform.position;
+        camera.orthographic = true;
+        camera.orthographicSize = canvas.GetComponent<RectTransform>().sizeDelta.y / 2; 
+    }
+
+    static T GetComponent<T>(GameObject[] objs) where T:Component
+    {
+        T t = null;
+        foreach (var item in objs)
+        {
+            t = item.GetComponent<T>();
+            if (t != null)
+            {
+                return t;
+            }
+        }
+        return t;
+    }
 }
