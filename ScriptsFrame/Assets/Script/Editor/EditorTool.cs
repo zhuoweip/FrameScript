@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using UnityEditor.SceneManagement;
 
 public class EditorTool : Editor {
 
@@ -172,7 +173,7 @@ public class EditorTool : Editor {
  
         camera.transform.position = canvas.transform.position;
         camera.orthographic = true;
-        camera.orthographicSize = canvas.GetComponent<RectTransform>().sizeDelta.y / 2; 
+        camera.orthographicSize = canvas.GetComponent<RectTransform>().sizeDelta.y / 2;
     }
 
     static T GetComponent<T>(GameObject[] objs) where T:Component

@@ -19,6 +19,19 @@ namespace UICore
             else if (Input.GetKeyDown(KeyCode.F11)){Time.timeScale = 0; }
             #endregion
 
+            #region QualitySettings
+            if (Input.GetKeyDown(KeyCode.F1)) {
+                if (QualitySettings.GetQualityLevel() == 5)
+                    return;
+                QualitySettings.IncreaseLevel();
+            }
+            else if (Input.GetKeyDown(KeyCode.F2)) {
+                if (QualitySettings.GetQualityLevel() == 0)
+                    return;
+                QualitySettings.DecreaseLevel();
+            }
+            #endregion
+
             #region KeyBoard
             processes = Process.GetProcessesByName("osk");
             if (Input.GetKeyDown(KeyCode.F7))

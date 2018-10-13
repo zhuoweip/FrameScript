@@ -10,6 +10,9 @@ public class testLerp : MonoBehaviour {
 
     Queue<Vector3> queue = new Queue<Vector3>();
     public RawImage rImg;
+    public Transform cube;
+
+    public List<Texture> list = new List<Texture>();
 
     private IEnumerator Wait()
     {
@@ -25,18 +28,33 @@ public class testLerp : MonoBehaviour {
     private void Start()
     {
         Debug.Log(tips);
+        Loom.RunAsync(() =>
+        {
+            Debug.Log(1);
+            Loom.QueueOnMainThread(() =>
+            {
+                Debug.Log(2);
+            });
+        });
+        Debug.Log(3);
         //StartCoroutine(Wait());
     }
 
     private void Update()
     {
-        AA();
-        
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            BB();
-            //SMPostEffectsTransition smtranstion = GameObject.Instantiate(Resources.Load<GameObject>("Transitions/SMPostEffectsTransition")).GetComponent<SMPostEffectsTransition>();
-        }
+        Vector3 pos = rImg.transform.localPosition;
+        //rImg.transform.localPosition = new Vector3(pos.x, pos.y + Mathf.PerlinNoise(Time.time, 0) + pos.y, 0);
+
+        rImg.color = new Color(MathHelpr.PerlinNoise(PerlinNoise.Right), Mathf.PerlinNoise(0, Time.time), Mathf.PerlinNoise(Time.time, Time.time));
+
+        //cube.transform.position = new Vector3(0, Mathf.PerlinNoise(Time.time, 0) * 3 + 1, 0);
+        //AA();
+
+        //if (Input.GetKeyDown(KeyCode.A))
+        //{
+        //    BB();
+        //    //SMPostEffectsTransition smtranstion = GameObject.Instantiate(Resources.Load<GameObject>("Transitions/SMPostEffectsTransition")).GetComponent<SMPostEffectsTransition>();
+        //}
 
         //Vector3 vc = new Vector3(Random.Range(50, 100), 0, 0);
         ////queue.Enqueue(vc);
@@ -66,7 +84,6 @@ public class testLerp : MonoBehaviour {
 
     static bool test_name = true;
     string tips = Extend.GetVarName(test_name,it => test_name);
-    
 }
 
 public static class Extend
@@ -76,3 +93,7 @@ public static class Extend
         return ((System.Linq.Expressions.MemberExpression)exp.Body).Member.Name;
     }
 }
+
+
+
+

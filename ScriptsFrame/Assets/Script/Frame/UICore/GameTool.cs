@@ -691,6 +691,27 @@ public sealed class MathHelpr
     {
         return float.NegativeInfinity;
     }
+
+    //Color color = new Color(Mathf.PerlinNoise(Time.time, 0), Mathf.PerlinNoise(0, Time.time), Mathf.PerlinNoise(Time.time, Time.time));
+    /// <summary>
+    /// 柏林噪声
+    /// </summary>
+    public static float PerlinNoise(PerlinNoise per)
+    {
+        if (per == global::PerlinNoise.Right)
+            return Mathf.PerlinNoise(Time.time, 0);
+        else if (per == global::PerlinNoise.Down)
+            return Mathf.PerlinNoise(0, Time.time);
+        else
+            return Mathf.PerlinNoise(Time.time, Time.time);
+    }
+}
+
+public enum PerlinNoise
+{
+    Right,
+    Down,
+    RightDown,
 }
 
 #endregion
