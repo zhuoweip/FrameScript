@@ -172,6 +172,8 @@ public class EditorTool : Editor {
         }
  
         camera.transform.position = canvas.transform.position;
+        Vector3 pos = camera.transform.position;
+        camera.transform.position = new Vector3(pos.x, pos.y, -10);
         camera.orthographic = true;
         camera.orthographicSize = canvas.GetComponent<RectTransform>().sizeDelta.y / 2;
     }

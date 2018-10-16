@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System.Linq;
 using CommandTerminal;
 using System;
+using System.Threading;
 
 public class testLerp : MonoBehaviour {
 
@@ -13,6 +14,7 @@ public class testLerp : MonoBehaviour {
     public Transform cube;
 
     public List<Texture> list = new List<Texture>();
+    
 
     private IEnumerator Wait()
     {
@@ -25,36 +27,69 @@ public class testLerp : MonoBehaviour {
         Debug.LogError(1111111);
     }
 
+    private void OnDragEventData(GameObject go,UnityEngine.EventSystems.PointerEventData data)
+    {
+        go.transform.position = Input.mousePosition;
+    }
+
     private void Start()
     {
-        Debug.Log(tips);
-        Loom.RunAsync(() =>
-        {
-            Debug.Log(1);
-            Loom.QueueOnMainThread(() =>
-            {
-                Debug.Log(2);
-            });
-        });
-        Debug.Log(3);
+        Debug.Log(rImg == null);
+        EventTriggerListener.Get(rImg).onDragEventData = OnDragEventData;
+
+        
+
+        float time = Time.realtimeSinceStartup;
+        //Loom.RunAsync(() =>
+        //{
+        //    Thread thread = new Thread(()=>
+        //    {
+        //        Loom.QueueOnMainThread(() =>
+        //        {
+                    Texture tex = Resources.Load<Texture>("white");
+        //        });
+        //    });
+        //    thread.Start();
+        //});
+        Debug.Log(Time.realtimeSinceStartup - time);
+
         //StartCoroutine(Wait());
     }
 
     private void Update()
     {
-        Vector3 pos = rImg.transform.localPosition;
+        //Vector3 pos = rImg.transform.localPosition;
         //rImg.transform.localPosition = new Vector3(pos.x, pos.y + Mathf.PerlinNoise(Time.time, 0) + pos.y, 0);
 
-        rImg.color = new Color(MathHelpr.PerlinNoise(PerlinNoise.Right), Mathf.PerlinNoise(0, Time.time), Mathf.PerlinNoise(Time.time, Time.time));
+        //rImg.color = new Color(MathHelpr.PerlinNoise(PerlinNoise.Right), Mathf.PerlinNoise(0, Time.time), Mathf.PerlinNoise(Time.time, Time.time));
 
         //cube.transform.position = new Vector3(0, Mathf.PerlinNoise(Time.time, 0) * 3 + 1, 0);
         //AA();
 
+
+
+
         //if (Input.GetKeyDown(KeyCode.A))
         //{
-        //    BB();
+        //    Debug.Log(111);
+        //    rImg.canvasRenderer.cull = true;
+        //    //BB();
         //    //SMPostEffectsTransition smtranstion = GameObject.Instantiate(Resources.Load<GameObject>("Transitions/SMPostEffectsTransition")).GetComponent<SMPostEffectsTransition>();
         //}
+        //else if (Input.GetKeyDown(KeyCode.D))
+        //{
+        //    rImg.canvasRenderer.cull = false;
+        //}
+
+        if (rImg)
+        {
+            //Debug.Log(rImg.canvasRenderer.hasMoved);
+            Debug.Log(rImg.canvasRenderer.hasRectClipping);
+        }
+
+
+
+
 
         //Vector3 vc = new Vector3(Random.Range(50, 100), 0, 0);
         ////queue.Enqueue(vc);

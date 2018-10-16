@@ -7,8 +7,19 @@ using System.Threading;
 using System.Linq;
 
 /// <summary>
-/// Loom只有在大量科学计算的时候才比较有用，很多时候内置的API
-/// 只能在主线程进行就用不了 比如：SetAllPixels32 can only be called from the main thread.
+/// 使用比不使用的速度快，例如调用加载多图比不调用大概快500倍,这个是在编辑器运行的情况下，实际打包出来好像还要慢一点，待验证
+/// 调用方法如下
+/// Loom.RunAsync(() =>
+///        {
+///            Thread thread = new Thread(() =>
+///            {
+///                Loom.QueueOnMainThread(() =>
+///                {
+///                    Texture tex = Resources.Load<Texture>("white");
+///                });
+///            });
+///            thread.Start();
+///        });
 /// </summary>
 public class Loom : MonoBehaviour
 {
