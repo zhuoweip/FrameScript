@@ -718,6 +718,67 @@ public enum PerlinNoise
 
 #endregion
 
+#region 加载器
+public sealed class LoadUtil
+{
+    /// <summary>
+    /// 加载文件夹下所有图片
+    /// </summary>
+    /// <param name="texList"></param>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    public static IEnumerator LoadWWWAllPicture(List<Texture2D> texList,string path)
+    {
+        texList.Clear();
+        Hashtable ht = new Hashtable();
+        DirectoryInfo dir = new DirectoryInfo(path);
+        GetAllFiles(dir, ht);
+        foreach (DictionaryEntry de in ht)
+        {
+            WWW www = new WWW("file://" + path + "/" + de.Key);
+            yield return www;
+            if (www != null)
+            {
+                Texture2D tmp = www.texture;
+                tmp.name = de.Key.ToString();
+                texList.Add(tmp);
+            }
+            if (www.isDone)
+            {
+                www.Dispose();
+                Resources.UnloadUnusedAssets();
+            }
+        }
+    }
+
+    public static void GetAllFiles(DirectoryInfo dir, Hashtable ht)
+    {
+        FileSystemInfo[] fileinfo = dir.GetFileSystemInfos(); 
+        foreach (FileSystemInfo i in fileinfo)  
+        {
+            if (i is DirectoryInfo)             
+            {
+                GetAllFiles((DirectoryInfo)i, ht);  
+            }
+            else
+            {
+                string str = i.FullName;      
+                string path = Application.streamingAssetsPath;
+                string strType = str.Substring(path.Length);
+                string suffix = strType.Substring(strType.Length - 3).ToLower();
+                if (suffix == "png"| suffix == "jpg")
+                {
+                    if (ht.Contains(strType))
+                        ht[strType] = strType;
+                    else
+                        ht.Add(strType, strType);
+                }
+            }
+        }
+    }
+}
+#endregion
+
 #region Linq拓展
 public static class LinqUtil
 {
