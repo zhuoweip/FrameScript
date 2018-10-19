@@ -101,6 +101,7 @@ public class AutoCreatClass : Editor {
     {
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("using UICore;");
+        sb.AppendLine("using UnityEngine");
         sb.AppendLine("using UnityEngine.UI;");
         sb.AppendLine();
 
