@@ -53,8 +53,9 @@ namespace UICore
 
         private AudioSource[] audioSources;
 
-        void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             for (int i = 0; i < 5; i++)
                 transform.gameObject.AddComponent<AudioSource>();
             sources = transform.GetComponents<AudioSource>();

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UICore;
 using UnityEngine.UI;
@@ -21,7 +21,7 @@ r3btn = GameTool.GetTheChildComponent<Button>(gameObject,"r3");
     //初始化界面数据
     protected override void InitDataOnAwake()
     {
-
+      
     }
 
     protected override void RegistBtnsAnimation()

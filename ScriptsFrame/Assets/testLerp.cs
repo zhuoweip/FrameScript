@@ -37,7 +37,6 @@ public class testLerp : MonoBehaviour {
         Debug.Log(rImg == null);
         EventTriggerListener.Get(rImg).onDragEventData = OnDragEventData;
 
-        
 
         float time = Time.realtimeSinceStartup;
         //Loom.RunAsync(() =>

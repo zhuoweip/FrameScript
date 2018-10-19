@@ -25,7 +25,7 @@ namespace UICore
     }
 
     //继承于Mono的单例模式
-    public class  UnitySingleton<T> : MonoBehaviour where T:Component
+    public class UnitySingleton<T> : MonoBehaviour where T : Component
     {
         protected static T instance = null;
 
@@ -55,6 +55,21 @@ namespace UICore
                 return instance;
             }
         }
+
+        protected virtual void Awake()
+        { }
+
+        protected virtual void OnEnable()
+        { }
+
+        protected virtual void OnDisable()
+        { }
+
+        protected virtual void Start()
+        { }
+
+        protected virtual void LateUpdate()
+        { }
 
         protected virtual void Update()
         { }

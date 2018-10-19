@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace UICore
 {
     [RequireComponent(typeof(Terminal))]
-    public class GameManager : UnitySingleton<GameManager>
+    public class CmdManager : UnitySingleton<CmdManager>
     {
         private Process[] processes;
 

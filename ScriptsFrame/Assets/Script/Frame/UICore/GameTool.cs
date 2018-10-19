@@ -248,6 +248,8 @@ public static class GameTool
         first = second;
         second = t;
     }
+
+
 }
 #endregion
 
@@ -1765,7 +1767,7 @@ public static class LinqUtil
     }
 
     /// <summary>
-    /// 队列Queue 平滑
+    /// 队列Queue 平滑 过滤波器
     /// </summary>
     /// <param name="queue"></param>
     /// <param name="data"></param>
@@ -1782,6 +1784,27 @@ public static class LinqUtil
         Vector3 averagePos = pos / queue.Count;
         pos = Vector3.zero;
         return averagePos;
+    }
+
+    /// <summary>
+    /// 过滤波器
+    /// </summary>
+    /// <param name="queue"></param>
+    /// <param name="data"></param>
+    /// <param name="filterLength"></param>
+    /// <returns></returns>
+    public static Vector3 LowPassAccelerometer(ref Queue<Vector3> queue, Vector3 data,int filterLength)
+    {
+        if (filterLength <= 0)
+            return data;
+        queue.Enqueue(data);
+        queue.Dequeue();
+
+        Vector3 vFiltered = Vector3.zero;
+        foreach (Vector3 v in queue)
+            vFiltered += v;
+        vFiltered /= filterLength;
+        return vFiltered;
     }
 
     /// <summary>
@@ -2455,6 +2478,43 @@ public sealed class TextureUtil
         t2d.LoadImage(imgBytes);
         t2d.Apply();
         return t2d;
+    }
+
+    /// <summary>
+    /// RenderTexture转Texture2D
+    /// </summary>
+    /// <param name="rt"></param>
+    /// <returns>这张渲染的一般是camera的renderTexture不然没有像素</returns>
+    public static Texture2D GetTex2DByRenderTexture(RenderTexture rt)
+    {
+        if (rt == null) return null;
+        Texture2D t2D = new Texture2D(rt.width, rt.height, TextureFormat.ARGB32, false);
+        RenderTexture.active = rt;
+        t2D.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        t2D.Apply();
+        RenderTexture.active = null;
+        return t2D;
+    }
+
+    /// <summary>
+    /// 截屏
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="tex"></param>
+    /// <returns>
+    /// 截取全屏   
+    /// StartCoroutine(TextureUtil.GetScreenTexture(0, 0, Screen.width, Screen.height, null));
+    /// </returns>
+    public static IEnumerator GetScreenTexture(float x,float y,int width,int height,Texture tex)
+    {
+        yield return Yielders.EndOfFrame;
+        Texture2D t = new Texture2D(width, height, TextureFormat.RGB24, false);
+        t.ReadPixels(new Rect(x, y, width, height), 0, 0, true);
+        t.Apply();
+        tex = t;
     }
 }
 #endregion
@@ -3897,6 +3957,28 @@ public static class MaskableGraphicExtension
         return graphic;
     }
 
+    #region 坐标转换
+    /// <summary>
+    /// 世界坐标转UGUI坐标 
+    /// </summary>
+    /// <param name="graphic"></param>
+    /// <param name="transform"></param>
+    /// <param name="canvas"></param>
+    /// <returns></returns>
+    public static MaskableGraphic GetPosByWorldPos(this MaskableGraphic graphic, Transform transform, Canvas canvas)
+    {
+        Vector2 uisize = canvas.GetComponent<RectTransform>().sizeDelta;//得到画布的尺寸
+        Vector2 screenpos = Camera.main.WorldToScreenPoint(transform.position);//将世界坐标转换为屏幕坐标
+        Vector2 screenpos2;
+        screenpos2.x = screenpos.x - (Screen.width / 2);//转换为以屏幕中心为原点的屏幕坐标
+        screenpos2.y = screenpos.y - (Screen.height / 2);
+        Vector2 uipos;
+        uipos.x = (screenpos2.x / Screen.width) * uisize.x;
+        uipos.y = (screenpos2.y / Screen.height) * uisize.y;//得到UGUI的anchoredPosition
+        graphic.rectTransform.anchoredPosition = uipos;
+        return graphic;
+    }
+
     /// <summary>
     /// 获取rect屏幕坐标
     /// </summary>
@@ -3906,6 +3988,7 @@ public static class MaskableGraphicExtension
         graphic.rectTransform.GetScreenPos(out screenPosition, canvas, camera);
         return graphic;
     }
+    #endregion
 
     public static RectTransform GetScreenPos(this RectTransform rect, out Vector3 screenPosition, Canvas canvas = null, Camera camera = null)
     {

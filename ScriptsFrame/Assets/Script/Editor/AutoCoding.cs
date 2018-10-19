@@ -19,6 +19,7 @@ public class AutoCoding : Editor
         RawImage rImg = select.GetComponent<RawImage>();
         Image img = select.GetComponent<Image>();
         Button btn = select.GetComponent<Button>();
+        Text text = select.GetComponent<Text>();
 
         Transform parent = null;
         Type baseUI = GetBaseUIType(select.transform, out parent);
@@ -32,7 +33,7 @@ public class AutoCoding : Editor
         {
             if (IsExistSameName(parent, select.transform))
                 return;
-            GetFile(baseUI.Name, rImg, img, btn, select.name, GetParentPath(select.transform, parent));
+            GetFile(baseUI.Name, text, rImg, img, btn, select.name, GetParentPath(select.transform, parent));
         }
     }
 
@@ -87,7 +88,7 @@ public class AutoCoding : Editor
     }
 
     /// <summary>找到Assets文件夹下该类</summary>
-    private static void GetFile(string monoName, RawImage rImg, Image img, Button btn, string selectName, string parentPath)
+    private static void GetFile(string monoName, Text text, RawImage rImg, Image img, Button btn, string selectName, string parentPath)
     {
         string fullPath = Application.dataPath + "/Script" + "/";//加文件夹名减少计算
         if (Directory.Exists(fullPath))
@@ -103,7 +104,7 @@ public class AutoCoding : Editor
                         string path = files[i].FullName.Replace(@"\", "/");
                         int index = path.IndexOf("Assets");
                         path = path.Substring(index, path.Length - index);
-                        AddMono(path, rImg, img, btn, selectName, parentPath);
+                        AddMono(path, text, rImg, img, btn, selectName, parentPath);
                     }
                     continue;
                 }
@@ -115,6 +116,8 @@ public class AutoCoding : Editor
     public const string nonPublicStr = "private";
     /// <summary>"public"</summary>
     public const string publicStr = "public";
+    /// <summary>Text</summary>
+    public const string textStr = "Text";
     /// <summary>"RawImage"</summary>
     public const string rawImageStr = "RawImage";
     /// <summary>"Image"</summary>
@@ -137,17 +140,17 @@ public class AutoCoding : Editor
     public const string FindTheChild = " = GameTool.FindTheChild";
 
     /// <summary>添加脚本</summary>
-    private static void AddMono(string foldePath, RawImage rImg, Image img, Button btn, string selectName, string path)
+    private static void AddMono(string foldePath, Text text, RawImage rImg, Image img, Button btn, string selectName, string path)
     {
         string[] lines = File.ReadAllLines(foldePath);
-        AddLine(lines, rImg, img, btn, selectName, path);
+        AddLine(lines, text, rImg, img, btn, selectName, path);
 
         File.WriteAllLines(foldePath, lines);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
     }
 
-    private static void AddLine(string[] lines, RawImage rImg, Image img, Button btn, string selectName, string path)
+    private static void AddLine(string[] lines,Text text, RawImage rImg, Image img, Button btn, string selectName, string path)
     {
         for (int i = 0; i < lines.Length; i++)
         {
@@ -156,6 +159,14 @@ public class AutoCoding : Editor
                 if (!IsHaveLine(lines, usingUIStr))
                 {
                     lines[i] += Environment.NewLine + usingUIStr;
+                }
+            }
+            if (lines[i].Contains(baseUIStr))
+            {
+                if (text != null && !IsHaveLine(lines, selectName + "text") && btn == null)
+                {
+                    string line = textStr + " " + selectName + "text";
+                    lines[i - 1] += Environment.NewLine + "\t" + nonPublicStr + " " + line + ";";//i - 1在上面添加行
                 }
             }
             if (lines[i].Contains(baseUIStr))
@@ -184,10 +195,19 @@ public class AutoCoding : Editor
             }
             if (lines[i].Contains(baseUIStr))
             {
-                if (!IsHaveLine(lines,selectName + "Trans") && btn == null && rImg == null && img == null)
+                if (!IsHaveLine(lines,selectName + "Trans") && btn == null && text == null && rImg == null && img == null)
                 {
                     string line = transformStr + " " + selectName + "Trans";
                     lines[i - 1] += Environment.NewLine + "\t" + nonPublicStr + " " + line + ";";
+                }
+            }
+            if (lines[i].Contains(InitUiOnAwakeStr))
+            {
+                if (text != null && !IsHaveLine(lines, selectName + "text" + " = GameTool") && btn == null)
+                {
+                    string line = selectName + "text" + GetTheChildComponent + textStr + ">" +
+                    "(gameObject," + "\"" + path + "\"" + ");";
+                    lines[i] += Environment.NewLine + "\t\t" + line;
                 }
             }
             if (lines[i].Contains(InitUiOnAwakeStr))
@@ -219,7 +239,7 @@ public class AutoCoding : Editor
             }
             if (lines[i].Contains(InitUiOnAwakeStr))
             {
-                if (!IsHaveLine(lines, selectName + "Trans" + " = GameTool") && btn == null && rImg == null && img == null)
+                if (!IsHaveLine(lines, selectName + "Trans" + " = GameTool") && btn == null && text == null && rImg == null && img == null)
                 {
                     string line = selectName + "Trans" + FindTheChild +
                     "(gameObject," + "\"" + path + "\"" + ");";

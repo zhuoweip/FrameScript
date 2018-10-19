@@ -20,22 +20,25 @@ public class test : MonoBehaviour {
 
     public List<int> list1 = new List<int>();
 
+    private List<int> list2 = new List<int>();
+    private int index;
+
 	// Use this for initialization
 	void Start () {
 
         //transform.IsChildOf(cc);
-        EventTriggerListener.Get(rImg).onClick = OnClick;
-        EventTriggerListener.Get(rImg, true, 0.2f).onDoubleClick = OnDoubleClick;
-        //Debug.Log(MathHelpr.GetMaxLength(dd));
+        //EventTriggerListener.Get(rImg).onClick = OnClick;
+        //EventTriggerListener.Get(rImg, true, 0.2f).onDoubleClick = OnDoubleClick;
+        ////Debug.Log(MathHelpr.GetMaxLength(dd));
 
-        bool aa = a == 0 ? true : a > 3 ? true : false;
-        Debug.Log(aa);
+        //bool aa = a == 0 ? true : a > 3 ? true : false;
+        //Debug.Log(aa);
 
-        var xxxx = LinqUtil.OrderBy<GameObject,string,Vector3,string>(list.ToArray(), item => item.name,item=>item.transform.localScale);
-        foreach (var item in xxxx)
-        {
-            Debug.Log(item);
-        }
+        //var xxxx = LinqUtil.OrderBy<GameObject,string,Vector3,string>(list.ToArray(), item => item.name,item=>item.transform.localScale);
+        //foreach (var item in xxxx)
+        //{
+        //    Debug.Log(item);
+        //}
     }
 
     private void GetFrameTexture()
@@ -63,7 +66,16 @@ public class test : MonoBehaviour {
     void Update () {
         if (Input.GetKeyDown(KeyCode.A))
         {
-           
+            index++;
+            list2.Add(index);
+            if (list2.Count > 4)
+            {
+                list2.Remove(list2[0]);
+            }
+            for (int i = 0; i < list2.Count; i++)
+            {
+                Debug.Log(list2[i]);
+            }
 
             //LinqUtil.Forward(list1);
             //for (int i = 0; i < list1.Count; i++)

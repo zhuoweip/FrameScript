@@ -42,8 +42,9 @@ namespace UICore
             return null;
         }
 
-        void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             uiRoot = GameObject.Find("UIRoot").transform;
             canvas = uiRoot.parent;
             dicAllUI = new Dictionary<EUiId, BaseUI>();
@@ -51,7 +52,7 @@ namespace UICore
             InitGetBaseUiSubType();
         }
 
-        private void Start()
+        protected override void Start()
         {
             InitUIManager();
         }
@@ -131,6 +132,12 @@ namespace UICore
                         SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
                     //CurrentId = nextUiId;
                     baseUI.ShowUI();
+
+                    /* 到时候可能要改成这样，因为在OnEnable的时候Enable还为false,不能调用协程
+                    baseUI.ShowUI();
+                    if (EventTypeName != null)
+                        SwanEngine.Events.Dispatcher.Instance.DispathEvent(EventTypeName, param);
+                    */
                 }
                 CurrentId = nextUiId;
             });
