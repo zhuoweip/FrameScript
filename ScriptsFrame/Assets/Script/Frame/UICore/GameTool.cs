@@ -1007,6 +1007,27 @@ public static class LinqUtil
         dict[Pop<string>(ref keys)] = value;
     }
 
+
+    /// <summary>
+    /// 字典排序
+    /// </summary>
+    /// <typeparam name="T1"></typeparam>
+    /// <typeparam name="T2"></typeparam>
+    /// <param name="dic"></param>
+    /// <param name="_ascending"></param>
+    /// 对Vector3排序
+    /// dicSort = from objDic in dic orderby objDic.Key.z ascending select objDic;
+    public static void DictionarySort<T1, T2>(IDictionary<T1, T2> dic,bool _ascending)
+    {
+        IOrderedEnumerable<KeyValuePair<T1, T2>>dicSort;
+        if (_ascending)
+            dicSort = from objDic in dic orderby objDic.Key ascending select objDic;
+        else
+            dicSort = from objDic in dic orderby objDic.Key descending select objDic;
+        foreach (KeyValuePair<T1, T2> item in dicSort)
+            Debug.Log(string.Format("item.Key = {0},item.Value = {1}", item.Key, item.Value));
+    }
+
     /// <summary>
     /// 通过深度数组来移除数组中的一个值
     /// 
