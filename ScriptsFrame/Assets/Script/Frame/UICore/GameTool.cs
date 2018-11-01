@@ -2579,7 +2579,7 @@ public sealed class TextureUtil
     }
 
     /// <summary>
-    /// 截屏
+    /// 截图
     /// </summary>
     /// <param name="x"></param>
     /// <param name="y"></param>
@@ -2597,6 +2597,22 @@ public sealed class TextureUtil
         t.ReadPixels(new Rect(x, y, width, height), 0, 0, true);
         t.Apply();
         tex = t;
+    }
+
+    /// <summary>
+    /// 截图
+    /// </summary>
+    /// <param name="sourceTex"></param>
+    /// <returns></returns>
+    public static Texture CaptureTexture(Texture sourceTex)
+    {
+        RenderTexture renderTexture = new RenderTexture(sourceTex.width, sourceTex.height, 24);
+        renderTexture.anisoLevel = 0;
+        renderTexture.filterMode = FilterMode.Point;
+        renderTexture.wrapMode = TextureWrapMode.Clamp;
+
+        Graphics.Blit(sourceTex, renderTexture);
+        return renderTexture;
     }
 }
 #endregion
@@ -3784,6 +3800,18 @@ public static class TransformUtil
             return transform.parent == parent;
         else                    //需要向上找的时候，使用自带方法
             return transform.IsChildOf(parent);
+    }
+
+    /// <summary>
+    /// 对子物体进行倒序排序
+    /// </summary>
+    /// <param name="transform"></param>
+    public static void ReverseChild(this Transform transform)
+    {
+        if (transform.childCount == 0)
+            return;
+        for (int i = 0; i < transform.childCount; i++)
+            transform.GetChild(i).SetSiblingIndex(0);
     }
 
     /// <summary>

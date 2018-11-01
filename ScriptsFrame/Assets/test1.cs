@@ -9,8 +9,8 @@ public class test1 : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        Debug.Log(rimg == null);
-	}
+        transform.ReverseChild();
+    }
 	
 	// Update is called once per frame
 	void Update () {
