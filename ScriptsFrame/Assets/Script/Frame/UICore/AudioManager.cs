@@ -25,7 +25,6 @@ namespace UICore
 {
     public class AudioManager : UnitySingleton<AudioManager>
     {
-
         public Dictionary<MusicType, string> dic = new Dictionary<MusicType, string>
         {
             { MusicType.NormalBg,"柔和的风_爱给网_aigei_com"},
@@ -61,16 +60,33 @@ namespace UICore
             sources = transform.GetComponents<AudioSource>();
             _bgSource = sources[0];
             audioSources = (AudioSource[])LinqUtil.CustomWhere(sources,item => item != _bgSource);
+
+            GetAudioClipByMusicType();
         }
+
+        private void GetAudioClipByMusicType()
+        {
+            foreach (MusicType type in Enum.GetValues(typeof(MusicType)))
+            {
+                AudioClip clip = Resources.Load<AudioClip>("Music" + "/" + dic[type]);
+                if (clip!=null)
+                    audioDic.Add(type, clip);
+            }
+        }
+
+        private Dictionary<MusicType, AudioClip> audioDic = new Dictionary<MusicType, AudioClip>();
 
         public void Play_Bg(MusicType type)
         {
-            if (_bgSource != null)
-            {
+            //if (_bgSource != null)
+            //{
+            //    _bgSource.Stop();
+            //    _bgSource.clip = null;
+            //}
+            if (_bgSource.isPlaying)
                 _bgSource.Stop();
-                _bgSource.clip = null;
-            }
-            AudioClip audioClip = Resources.Load<AudioClip>("Music" + "/" + dic[type]);
+
+            AudioClip audioClip = audioDic[type]; /*Resources.Load<AudioClip>("Music" + "/" + dic[type])*/;
             _bgSource.clip = audioClip;
             _bgSource.Play();
             _bgSource.loop = true;
@@ -82,14 +98,16 @@ namespace UICore
             //切换场景时先关闭所有非背景音效
             foreach (var item in audioSources)
             {
-                if (item != null)
-                {
+                //if (item != null)
+                //{
+                //    item.Stop();
+                //    item.clip = null;
+                //}
+                if (item.isPlaying)
                     item.Stop();
-                    item.clip = null;
-                }
             }
             _audioSource = audioSources[audioIndex];
-            AudioClip audioClip = Resources.Load<AudioClip>("Music" + "/" + dic[type]);
+            AudioClip audioClip = audioDic[type]; /*Resources.Load<AudioClip>("Music" + "/" + dic[type])*/;
             _audioSource.clip = audioClip;
             _audioSource.Play();
             _audioSource.loop = isLoop;

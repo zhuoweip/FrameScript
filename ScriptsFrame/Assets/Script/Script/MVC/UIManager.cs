@@ -79,6 +79,8 @@ namespace UICore
 
         public void ShowUI(EUiId nextUiId, SceneTransType transType = SceneTransType.Null, Transform parent = null, string EventTypeName = null, params object[] param)
         {
+            Resources.UnloadUnusedAssets();
+            GC.Collect();
             if (isInit)
                 AudioManager.Instance.PlayAudio();
             if (!isInit)
@@ -141,6 +143,8 @@ namespace UICore
                 }
                 CurrentId = nextUiId;
             });
+            Resources.UnloadUnusedAssets();
+            GC.Collect();
         }
 
         private void RemoveUiId(EUiId uiId)

@@ -5,6 +5,9 @@ using System.Diagnostics;
 
 namespace UICore
 {
+    /// <summary>
+    /// 需要挂载
+    /// </summary>
     [RequireComponent(typeof(Terminal))]
     public class CmdManager : UnitySingleton<CmdManager>
     {
