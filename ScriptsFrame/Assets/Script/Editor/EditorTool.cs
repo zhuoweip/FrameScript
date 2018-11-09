@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEditor;
 using System.IO;
 using UnityEditor.SceneManagement;
@@ -190,5 +191,53 @@ public class EditorTool : Editor {
             }
         }
         return t;
+    }
+
+    /// <summary>
+    /// RawImage 转 Image
+    /// </summary>
+    [MenuItem("GameObject/Tool/RawImage->Image ", false, -1)]
+    static void ReplaceRawImageToImage()
+    {
+        Dictionary<GameObject, string> dic = new Dictionary<GameObject, string>();
+        GameObject[] gos = Selection.gameObjects;
+        for (int i = 0; i < gos.Length; i++)
+        {
+            RawImage[] rImgs = gos[i].GetComponentsInChildren<RawImage>();
+            for (int j = 0; j < rImgs.Length; j++)
+            {
+                dic.Add(rImgs[j].gameObject, AssetDatabase.GetAssetPath(rImgs[j].texture));
+            }
+        }
+        foreach (var item in dic)
+        {
+            Undo.DestroyObjectImmediate(item.Key.GetComponent<RawImage>());
+            Object newImg = AssetDatabase.LoadAssetAtPath(item.Value, typeof(Sprite));
+            Undo.AddComponent<Image>(item.Key).sprite = newImg as Sprite;
+        }
+    }
+
+    /// <summary>
+    /// Image 转 RawImage
+    /// </summary>
+    [MenuItem("GameObject/Tool/Image->RawImage ", false, -1)]
+    static void ReplaceImageToRawImage()
+    {
+        Dictionary<GameObject, string> dic = new Dictionary<GameObject, string>();
+        GameObject[] gos = Selection.gameObjects;
+        for (int i = 0; i < gos.Length; i++)
+        {
+            Image[] rImgs = gos[i].GetComponentsInChildren<Image>();
+            for (int j = 0; j < rImgs.Length; j++)
+            {
+                dic.Add(rImgs[j].gameObject, AssetDatabase.GetAssetPath(rImgs[j].sprite));
+            }
+        }
+        foreach (var item in dic)
+        {
+            Undo.DestroyObjectImmediate(item.Key.GetComponent<Image>());
+            Object newImg = AssetDatabase.LoadAssetAtPath(item.Value, typeof(Texture));
+            Undo.AddComponent<RawImage>(item.Key).texture = newImg as Texture;
+        }
     }
 }
