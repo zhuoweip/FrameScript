@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 public class AutoCreatClass : Editor {
 
-    [MenuItem("GameObject/Tool/创建类 _%#_ W", false, -1)]
+    [MenuItem("GameObject/Tool/创建类 _%#_ P", false, -1)]//跟自动化构建代码距离较远，以免误触
     public static void JudgeHaveClass()
     {
         GameObject select = Selection.activeGameObject;
