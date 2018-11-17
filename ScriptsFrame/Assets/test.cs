@@ -129,6 +129,15 @@ public class test : MonoBehaviour {
     public RectTransform trans;
     public RectTransform trans2;
 
+    public Transform sp;
+    public float offset;
+    public AlginDir dir;
+
+    private void LateUpdate()
+    {
+        sp.AlginScreen(Camera.main, dir, offset);
+    }
+
     private void OnApplicationQuit()
     {
 

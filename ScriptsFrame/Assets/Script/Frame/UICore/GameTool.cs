@@ -4055,6 +4055,53 @@ public static class TransformUtil
         for (int i = transform.childCount; i >= 0; i--)
             UnityEngine.Object.DestroyImmediate(transform.GetChild(i).gameObject);
     }
+
+    /// <summary>
+    /// 对齐屏幕位置
+    /// </summary>
+    /// <param name="transform"></param>
+    /// <param name="camera">一般是Camera.main</param>
+    /// <param name="dir"></param>
+    /// <param name="offset">图片偏移值，因为是像素对齐，不是图片对齐，所以这个值对于带有透明通道的图有用</param>
+    /// <returns></returns>
+    public static Transform AlginScreen(this Transform transform,Camera camera, AlginDir dir,float offset)
+    {
+        Vector3 pos = transform.position;
+        Vector3 screenPos = pos;
+
+        switch (dir)
+        {
+            case AlginDir.Left:
+                screenPos.x = 0;
+                break;
+            case AlginDir.Right:
+                screenPos.x = Screen.width;
+                break;
+            case AlginDir.Top:
+                screenPos.y = Screen.height;
+                break;
+            case AlginDir.Down:
+                screenPos.y = 0;
+                break;
+            default:
+                break;
+        }
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(screenPos);
+        if (dir == AlginDir.Left || dir == AlginDir.Right)
+            pos.x = worldPos.x + offset;
+        else
+            pos.y = worldPos.y + offset;
+        transform.position = pos;
+        return transform;
+    }
+}
+
+public enum AlginDir
+{
+    Left,
+    Right,
+    Top,
+    Down
 }
 #endregion
 
