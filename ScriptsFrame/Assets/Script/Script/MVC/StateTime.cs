@@ -17,7 +17,7 @@ public class StateTime : MonoBehaviour
     void Start()
     {
         noBadyTime = float.Parse(Configs.Instance.LoadText("无人操作返回", "time"));
-        string cursorstate = Configs.Instance.LoadText("隐藏鼠标", "false/true");
+        string cursorstate = Configs.Instance.LoadText("开启鼠标", "false/true");
         if (cursorstate == "false")
         {
             Cursor.visible = false;

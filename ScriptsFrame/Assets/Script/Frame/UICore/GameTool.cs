@@ -249,7 +249,77 @@ public static class GameTool
         second = t;
     }
 
+    /// <summary>
+    /// 按名称排序
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="t1"></param>
+    /// <param name="t2"></param>
+    /// <returns></returns>
+    public static int IndexSort<T>(T t1,T t2) where T : UnityEngine.Object
+    {
+        return string.Compare(t2.name, t1.name);
+    }
 
+    /// <summary>
+    /// 按名称倒序
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="t1"></param>
+    /// <param name="t2"></param>
+    /// <returns></returns>
+    public static int ReverseIndexSort<T>(T t1,T t2) where T : UnityEngine.Object
+    {
+        return string.Compare(t1.name, t2.name);
+    }
+
+    /// <summary>
+    /// 世界坐标转UGUI坐标 坐标转换 RenderMode.Overlay
+    /// </summary>
+    /// <param name="worldObj"></param>
+    /// <param name="canvas"></param>
+    /// <returns></returns>
+    public static Vector3 World2UGUIPos(Vector3 worldPos, Canvas canvas)
+    {
+        Vector2 uisize = canvas.GetComponent<RectTransform>().sizeDelta;//得到画布的尺寸
+        Vector2 screenpos = Camera.main.WorldToScreenPoint(worldPos);//将世界坐标转换为屏幕坐标
+        Vector2 screenpos2;
+        screenpos2.x = screenpos.x - (Screen.width / 2);//转换为以屏幕中心为原点的屏幕坐标
+        screenpos2.y = screenpos.y - (Screen.height / 2);
+        Vector2 uipos;
+        uipos.x = (screenpos2.x / Screen.width) * uisize.x;
+        uipos.y = (screenpos2.y / Screen.height) * uisize.y;//得到UGUI的anchoredPosition
+        return uipos;
+    }
+
+    /// <summary>
+    /// 屏幕坐标转UGUI坐标
+    /// </summary>
+    /// <param name="screenpos"></param>
+    /// <param name="canvas"></param>
+    /// <returns></returns>
+    public static Vector2 Screen2UGUIPos(Vector2 screenpos, Canvas canvas)
+    {
+        Vector2 uisize = canvas.GetComponent<RectTransform>().sizeDelta;
+        Vector2 screenpos2;
+        screenpos2.x = screenpos.x - (Screen.width / 2);
+        screenpos2.y = screenpos.y - (Screen.height / 2);
+        Vector2 uipos;
+        uipos.x = (screenpos2.x / Screen.width) * uisize.x;
+        uipos.y = (screenpos2.y / Screen.height) * uisize.y;
+        return uipos;
+    }
+
+    /// <summary>
+    /// upRect是否显示在bottomRect上面
+    /// </summary>
+    /// <param name="bottomRect"></param>
+    /// <param name="upRect"></param>
+    /// <returns></returns>
+    public static bool IsSheltered(Graphic bottomRect,Graphic upRect)
+    {
+        return RectTransformUtility.RectangleContainsScreenPoint(bottomRect.rectTransform, new Vector2(upRect.rectTransform.position.x, upRect.rectTransform.position.y));
+    }
 }
 #endregion
 
@@ -2762,12 +2832,12 @@ public sealed class ColorUtil
 #endregion
 
 #region 字符串拓展
-public sealed class StringUtil
+public static class StringUtil
 {
     /// <summary>
     /// 获取字符串所表达的函数名
     /// </summary>
-    public static string Method(string pattern)
+    public static string Method(this string pattern)
     {
         if (string.IsNullOrEmpty(pattern))
             return string.Empty;
@@ -2792,7 +2862,7 @@ public sealed class StringUtil
     /// 将规定字符串翻译为星号匹配表达式
     /// 即删减正则表达式中除了星号外的所有功能
     /// </summary>
-    public static bool Is(string pattern, string value)
+    public static bool Is(this string pattern, string value)
     {
         if (!(pattern == value))
             return Regex.IsMatch(value, "^" + AsteriskWildcard(pattern) + "$");
@@ -2803,7 +2873,7 @@ public sealed class StringUtil
     /// 将规定字符串翻译为星号匹配表达式
     /// 即删减正则表达式中除了星号外的所有功能
     /// </summary>
-    public static string AsteriskWildcard(string pattern)
+    public static string AsteriskWildcard(this string pattern)
     {
         pattern = Regex.Escape(pattern);
         pattern = pattern.Replace("\\*", ".*?");
@@ -2813,7 +2883,7 @@ public sealed class StringUtil
     /// <summary>
     /// 根据长度将字符串分割到数组中
     /// </summary>
-    public static string[] Split(string str, int length = 1)
+    public static string[] Split(this string str, int length = 1)
     {
         Guard.Requires<ArgumentNullException>(str != null);
         Guard.Requires<ArgumentOutOfRangeException>(length > 0);
@@ -2830,7 +2900,7 @@ public sealed class StringUtil
     /// <summary>
     /// 将字符串重复指定的次数
     /// </summary>
-    public static string Repeat(string str, int num)
+    public static string Repeat(this string str, int num)
     {
         Guard.Requires<ArgumentNullException>(str != null);
         Guard.Requires<ArgumentOutOfRangeException>(num >= 0);
@@ -2845,7 +2915,7 @@ public sealed class StringUtil
     /// <summary>
     /// 随机打乱字符串中的所有字符
     /// </summary>
-    public static string Shuffle(string str, int? seed = null)
+    public static string Shuffle(this string str, int? seed = null)
     {
         Guard.Requires<ArgumentNullException>(str != null);
         System.Random random = Util.MakeRandom(seed);
@@ -2879,7 +2949,7 @@ public sealed class StringUtil
     /// <returns>
     /// 子字符串出现的次数
     /// </returns>
-    public static int SubstringCount(string str, string subStr, int start = 0, int? length = null, StringComparison comparison = StringComparison.CurrentCultureIgnoreCase)
+    public static int SubstringCount(this string str, string subStr, int start = 0, int? length = null, StringComparison comparison = StringComparison.CurrentCultureIgnoreCase)
     {
         Guard.Requires<ArgumentNullException>(str != null);
         Guard.Requires<ArgumentNullException>(subStr != null);
@@ -2899,7 +2969,7 @@ public sealed class StringUtil
     /// <summary>
     /// 反转规定字符串
     /// </summary>
-    public static string Reverse(string str)
+    public static string Reverse(this string str)
     {
         char[] chArray = str.ToCharArray();
         Array.Reverse((Array)chArray);
@@ -2912,7 +2982,7 @@ public sealed class StringUtil
     /// <param name="str">规定要填充的字符串</param><param name="length">规定新的字符串长度。如果该值小于字符串的原始长度，则不进行任何操作。</param><param name="padStr">规定供填充使用的字符串。默认是空白。
     /// 如果传入的字符串长度小于等于0那么会使用空白代替。
     /// 注释：空白不是空字符串
-    public static string Pad(string str, int length, string padStr = null, PadTypes type = PadTypes.Right)
+    public static string Pad(this string str, int length, string padStr = null, PadTypes type = PadTypes.Right)
     {
         Guard.Requires<ArgumentNullException>(str != null);
         int num1 = length - str.Length;
@@ -2940,7 +3010,7 @@ public sealed class StringUtil
     /// 在规定字符串中查找在规定搜索值，并在规定搜索值之后返回规定字符串的剩余部分。
     /// 如果没有找到则返回规定字符串本身
     /// </summary>
-    public static string After(string str, string search)
+    public static string After(this string str, string search)
     {
         Guard.Requires<ArgumentNullException>(str != null);
         Guard.Requires<ArgumentNullException>(search != null);
@@ -2951,10 +3021,21 @@ public sealed class StringUtil
     }
 
     /// <summary>
+    /// 字符串是否包含某个字符忽视大小写
+    /// </summary>
+    /// <param name="str"></param>
+    /// <param name="other"></param>
+    /// <returns></returns>
+    public static bool ContainsIgnoreCase(this string str, string other)
+    {
+        return str.IndexOf(other, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    /// <summary>
     /// 判断规定字符串是否包含规定子字符串
     /// 子字符串是识别大小写的
     /// </summary>
-    public static bool Contains(string str, params string[] needles)
+    public static bool Contains(this string str, params string[] needles)
     {
         Guard.Requires<ArgumentNullException>(str != null);
         Guard.Requires<ArgumentNullException>(needles != null);
@@ -2969,7 +3050,7 @@ public sealed class StringUtil
     /// <summary>
     /// 在规定字符串中替换匹配项
     /// </summary>
-    public static string Replace(string[] matches, string replace, string str)
+    public static string Replace(string[] matches, string replace,string str)
     {
         Guard.Requires<ArgumentNullException>(matches != null);
         Guard.Requires<ArgumentNullException>(replace != null);
@@ -2983,12 +3064,12 @@ public sealed class StringUtil
     /// 替换规定字符串中第一次遇到的匹配项
     /// 该函数对大小写敏感
     /// </summary>
-    public static string ReplaceFirst(string match, string replace, string str)
+    public static string ReplaceFirst(this string str,string match, string replace)
     {
         Guard.Requires<ArgumentNullException>(match != null);
         Guard.Requires<ArgumentNullException>(replace != null);
         Guard.Requires<ArgumentNullException>(str != null);
-        int startIndex = str.IndexOf(match, StringComparison.Ordinal);
+        int startIndex = str.IndexOf(match, StringComparison.Ordinal);//StringComparison.OrdinalIgnoreCase 忽略大小写
         if (startIndex >= 0)
             return str.Remove(startIndex, match.Length).Insert(startIndex, replace);
         return str;
@@ -2998,7 +3079,7 @@ public sealed class StringUtil
     /// 替换规定字符串中从后往前第一次遇到的匹配项
     /// 该函数对大小写敏感
     /// </summary>
-    public static string ReplaceLast(string match, string replace, string str)
+    public static string ReplaceLast(this string str,string match, string replace)
     {
         Guard.Requires<ArgumentNullException>(match != null);
         Guard.Requires<ArgumentNullException>(replace != null);
@@ -3041,13 +3122,12 @@ public sealed class StringUtil
         }
         return str1;
     }
-
     /// <summary>
     /// 如果长度超过给定的最大字符串长度，则截断字符串。 截断的字符串的最后一个字符将替换为缺省字符串
     /// eg: Truncate("hello world , the sun is shine",15," ") =&gt; hello world...
     /// </summary>
     /// <param name="str">要截断的字符串</param><param name="length">截断长度(含缺省字符长度)</param><param name="separator">临近的分隔符，如果设定则截断长度为截断长度最近的分隔符位置,如果传入的是一个正则表达式那么使用正则匹配。</param><param name="mission">缺省字符</param>
-    public static string Truncate(string str, int length, object separator = null, string mission = null)
+    public static string Truncate(this string str, int length, object separator = null, string mission = null)
     {
         if (str == null || length > str.Length)
             return str;
@@ -3084,7 +3164,7 @@ public sealed class StringUtil
     }
 
     /// <summary>获得字符下标</summary>
-    public static int GetStrngIndex(string str, char charStr)
+    public static int GetStrngIndex(this string str, char charStr)
     {
         int index = 0;
 
@@ -3103,7 +3183,7 @@ public sealed class StringUtil
     }
 
     /// <summary>统计string中的字符类型和个数</summary>
-    public static void CollectionChrCount(string str)
+    public static void CollectionChrCount(this string str)
     {
         int iAllChr = 0; //字符总数：不计字符'\n'和'\r'
         int iChineseChr = 0; //中文字符计数
@@ -3197,7 +3277,7 @@ public sealed class StringUtil
     /// <param name="text">被操作的字符串</param>
     /// <param name="pattern">字符分割规则。默认为将该字符串分割每个字符,直接传入一个字符将以那个字符为分割符号，加括弧号可以包含分割字符。支持正则表达式</param>
     /// <returns></returns>
-    public static Dictionary<string, int> CountWords(string text, string pattern = "")
+    public static Dictionary<string, int> CountWords(this string text, string pattern = "")
     {
         Dictionary<string, int> dictionary = new Dictionary<string, int>();
         string[] array = Regex.Split(text, pattern);
@@ -3222,7 +3302,7 @@ public sealed class StringUtil
     }
 
     /// <summary>获取字符串中的中文个数</summary>
-    public static int GetStringChineseCounts(string str)
+    public static int GetStringChineseCounts(this string str)
     {
         int count = 0;
         Regex regex = new Regex(@"^[\u4E00-\u9FA5]{0,}$");
@@ -3238,7 +3318,7 @@ public sealed class StringUtil
     }
 
     /// <summary>检查index位置是否存在匹配子字符串sub</summary>
-    public static bool CheckStringMatch(string sub, string baseStr, int index)
+    public static bool CheckStringMatch(this string sub, string baseStr, int index)
     {
         int i = 0;
         while (i < sub.Length)
@@ -3252,6 +3332,24 @@ public sealed class StringUtil
         return true;
     }
 
+    /// <summary>
+    /// 是否为空或者空白
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static bool IsNullOrWhitespace(this string str)
+    {
+        if (str == null)
+            return true;
+
+        for (var i = 0; i < str.Length; i++)
+        {
+            if (!char.IsWhiteSpace(str[i]))
+                return false;
+        }
+        return true;
+    }
+
     #region 表达式求值
     /// <summary>
     /// 表达式求值
@@ -3259,7 +3357,7 @@ public sealed class StringUtil
     /// </summary>
     /// <param name="s">算式表达式</param>
     /// <returns>返回算式的结果</returns>
-    public static double StringCompute(string s)
+    public static double StringCompute(this string s)
     {
         char[] array = s.ToCharArray();
         int i = 0;
@@ -3788,6 +3886,29 @@ public static class TransformUtil
         transform.localPosition = newPosition;
     }
 
+    public static void SetLocalEulerAngles(this Transform transform, Vector3 eulerAngles)
+    {
+        transform.localEulerAngles = new Vector3(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+    }
+
+    public static void SetLocalEulerX(this Transform transform, float x)
+    {
+        Vector3 newLocalEulerAngles = new Vector3(x, transform.localEulerAngles.y, transform.localEulerAngles.z);
+        transform.localEulerAngles = newLocalEulerAngles;
+    }
+
+    public static void SetLocalEulerY(this Transform transform, float y)
+    {
+        Vector3 newLocalEulerAngles = new Vector3(transform.localEulerAngles.x, y, transform.localEulerAngles.z);
+        transform.localEulerAngles = newLocalEulerAngles;
+    }
+
+    public static void SetLocalEulerZ(this Transform transform, float z)
+    {
+        Vector3 newLocalEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
+        transform.localEulerAngles = newLocalEulerAngles;
+    }
+
     public static void SetSizeDelta(this RectTransform rectTransfrom, Vector2 size)
     {
         rectTransfrom.sizeDelta = new Vector2(size.x, size.y);
@@ -4064,34 +4185,40 @@ public static class TransformUtil
     /// <param name="dir"></param>
     /// <param name="offset">图片偏移值，因为是像素对齐，不是图片对齐，所以这个值对于带有透明通道的图有用</param>
     /// <returns></returns>
-    public static Transform AlginScreen(this Transform transform,Camera camera, AlginDir dir,float offset)
+    public static Transform AlginScreen(this Transform transform,AlginDir dir,float offset, Camera camera)
     {
+        camera = camera == null ? Camera.main : camera;
         Vector3 pos = transform.position;
-        Vector3 screenPos = pos;
+        Vector3 worldPos = Vector3.zero;
+        Vector3 screenPos = camera.WorldToScreenPoint(pos);
 
         switch (dir)
         {
             case AlginDir.Left:
-                screenPos.x = 0;
+                worldPos = camera.ScreenToWorldPoint(new Vector3(0, screenPos.y, screenPos.z));
                 break;
             case AlginDir.Right:
-                screenPos.x = Screen.width;
+                worldPos = camera.ScreenToWorldPoint(new Vector3(Screen.width, screenPos.y, screenPos.z));
                 break;
             case AlginDir.Top:
-                screenPos.y = Screen.height;
+                worldPos = camera.ScreenToWorldPoint(new Vector3(screenPos.x, Screen.height, screenPos.z));
                 break;
             case AlginDir.Down:
-                screenPos.y = 0;
+                worldPos = camera.ScreenToWorldPoint(new Vector3(screenPos.x, 0, screenPos.z));
                 break;
             default:
                 break;
         }
-        Vector3 worldPos = Camera.main.ScreenToWorldPoint(screenPos);
         if (dir == AlginDir.Left || dir == AlginDir.Right)
-            pos.x = worldPos.x + offset;
+        {
+            worldPos.x += offset;
+            transform.position = new Vector3(worldPos.x, pos.y, pos.z);
+        }
         else
-            pos.y = worldPos.y + offset;
-        transform.position = pos;
+        {
+            worldPos.y += offset;
+            transform.position = new Vector3(pos.x, worldPos.y, pos.z);
+        }
         return transform;
     }
 }
@@ -4334,13 +4461,6 @@ public static class ActionExtension
             }
         }
     }
-}
-#endregion
-
-#region RectTransform
-public static class RectTransformUtil
-{
-
 }
 #endregion
 

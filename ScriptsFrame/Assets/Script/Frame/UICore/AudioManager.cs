@@ -64,6 +64,62 @@ namespace UICore
             GetAudioClipByMusicType();
         }
 
+        /// <summary>
+        /// 通过Type获取音频文件
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public AudioClip GetAudioClipByName(MusicType type)
+        {
+            Dictionary<MusicType, AudioClip>.Enumerator enumerator = audioDic.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                KeyValuePair<MusicType, AudioClip> pair = enumerator.Current;
+                if (pair.Key == type)
+                    return pair.Value;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 音频实在播放
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public bool IsAudioPlaying(int index)
+        {
+            return audioSources[index].isPlaying;
+        }
+
+        /// <summary>
+        /// 清除事件
+        /// </summary>
+        public void ClearCompleteAction()
+        {
+            OnCompleteAction = null;
+        }
+
+        /// <summary>
+        /// 获取音频名称
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public string GetAudioSourceClipName(int index)
+        {
+            return audioSources[index].clip.name;
+        }
+
+        /// <summary>
+        /// 静音
+        /// </summary>
+        public void MuteAudio()
+        {
+            for (int i = 0; i < audioSources.Length; i++)
+            {
+                audioSources[i].mute = true;
+            }
+        }
+
         private void GetAudioClipByMusicType()
         {
             foreach (MusicType type in Enum.GetValues(typeof(MusicType)))

@@ -19,36 +19,26 @@ public class UGUISpriteAnimation : MonoBehaviour
     public bool Loop = false;
 	public bool SetNatve = true;
 	public int LoopStart = 0;
+    public int LoopEnd = 0;
 	public string SpritePath;
 
  
     public int FrameCount
     {
-        get
-        {
-            return SpriteFrames.Count;
-        }
+        get{return SpriteFrames.Count;}
     }
  
     void Awake()
     {
         ImageSource = GetComponent<Image>();
-       
     }
  
     void Start()
     {
-       
-
-
         if (AutoPlay)
-        {
             Play();
-        }
         else
-        {
             IsPlaying = false;
-        }
     }
 
     private void SetSprite(int idx)
@@ -69,34 +59,28 @@ public class UGUISpriteAnimation : MonoBehaviour
         IsPlaying = true;
         Foward = false;
     }
+
+    //用这个来判断在第几张跟第几张之间循环
+    public bool IsLoopEnd;
  
     void Update()
     {
-
         if (!IsPlaying || 0 == FrameCount)
-        {
             return;
-        }
  
         mDelta += Time.deltaTime;
         if (mDelta > 1 / FPS)
         {
             mDelta = 0;
             if(Foward)
-            {
                 mCurFrame++;
-            }
             else
-            {
                 mCurFrame--;
-            }
- 
-            if (mCurFrame >= FrameCount)
+
+            if (mCurFrame >= (IsLoopEnd ? LoopEnd : FrameCount)) 
             {
                 if (Loop)
-                {
 					mCurFrame = LoopStart;
-                }
                 else
                 {
                     IsPlaying = false;
@@ -106,9 +90,7 @@ public class UGUISpriteAnimation : MonoBehaviour
             else if (mCurFrame<0)
             {
                 if (Loop)
-                {
                     mCurFrame = FrameCount-1;
-                }
                 else
                 {
                     IsPlaying = false;
@@ -128,9 +110,7 @@ public class UGUISpriteAnimation : MonoBehaviour
     public void Resume()
     {
         if (!IsPlaying)
-        {
             IsPlaying = true;
-        }
     }
  
     public void Stop()
@@ -146,5 +126,4 @@ public class UGUISpriteAnimation : MonoBehaviour
         SetSprite(mCurFrame);
         Play();
     }
-
 }

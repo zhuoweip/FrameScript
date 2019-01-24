@@ -87,7 +87,7 @@ public class Configs : MonoSingleton<Configs> {
     /// <param name="name"></param>
     /// <param name="info"></param>
     /// <param name="changStr"></param>
-    /// Configs.Instance.ChangText("隐藏鼠标","false/true","false");
+    /// Configs.Instance.ChangText("开启鼠标","false/true","false");
     public void ChangText(string name, string info, string changStr)
     {
         string data = dic[name];

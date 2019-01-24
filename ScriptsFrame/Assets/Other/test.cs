@@ -38,12 +38,13 @@ public class test : MonoBehaviour {
         //foreach (var item in xxxx)
         //{
         //    Debug.Log(item);
-        //}
+        //}z
     }
 
     private void GetFrameTexture()
     {
-
+        string a = "123";
+        StringUtil.Reverse(a);
     }
 
     public GameObject[] ccc;
@@ -135,7 +136,7 @@ public class test : MonoBehaviour {
 
     private void LateUpdate()
     {
-        sp.AlginScreen(Camera.main, dir, offset);
+        sp.AlginScreen(dir, offset, Camera.main);
     }
 
     private void OnApplicationQuit()
