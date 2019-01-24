@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PlugIn Module="SpeechInput">
+	<date>2013-09-24</date>
+	<version>1.0.0.35</version>
+	<caption>语音输入</caption>
+	<exe>SpeechInput.exe</exe>
+</PlugIn>
