@@ -10,27 +10,32 @@ using System.Threading;
 public class test1 : MonoBehaviour {
 
     public RawImage rimg;
+    public MaskableGraphic graphic;
 
     void Start()
     {
-        var stream1 = Observable.Start(() =>
-        {
-            Thread.Sleep(4000);//4000毫秒
-            print("等待了4秒");
-            return 1;
-        }); //线程1
-        var stream2 = Observable.Start(() =>
-        {
-            Thread.Sleep(TimeSpan.FromSeconds(2));
-            print("等待2秒");
-            return 2;
-        }); //线程2
+        //var stream1 = Observable.Start(() =>
+        //{
+        //    Thread.Sleep(4000);//4000毫秒
+        //    print("等待了4秒");
+        //    return 1;
+        //}); //线程1
+        //var stream2 = Observable.Start(() =>
+        //{
+        //    Thread.Sleep(TimeSpan.FromSeconds(2));
+        //    print("等待2秒");
+        //    return 2;
+        //}); //线程2
 
 
-        Observable.WhenAll(stream1, stream2).ObserveOnMainThread().Subscribe(_ => //当线程执行完毕，将其他线程中的值，返回到主线程中
+        //Observable.WhenAll(stream1, stream2).ObserveOnMainThread().Subscribe(_ => //当线程执行完毕，将其他线程中的值，返回到主线程中
+        //{
+        //    print(_[0]);
+        //    print(_[1]);
+        //});
+        graphic.RegisterDirtyLayoutCallback(() =>
         {
-            print(_[0]);
-            print(_[1]);
+            Debug.LogError(1);
         });
     }
 
