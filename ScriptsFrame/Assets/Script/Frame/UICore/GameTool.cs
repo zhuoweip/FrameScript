@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.Linq.Expressions;
 using UnityEngine.UI;
 using System.Reflection;
 using System;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections;
 using System.IO;
+using Random = UnityEngine.Random;
 
 #region GameTool
 public static class GameTool
@@ -119,6 +121,35 @@ public static class GameTool
 
         return method.Invoke(o, args);
     }
+
+    #region Invoke
+    private static string GetMethodName(Expression<Action> expr)
+    {
+        return ((MethodCallExpression)expr.Body).Method.Name;
+    }
+
+    public static void Invoke(this MonoBehaviour monoBehaviour, Expression<Action> expr, float time)
+    {
+        monoBehaviour.Invoke(GetMethodName(expr), time);
+    }
+
+    public static bool IsInvoking(this MonoBehaviour monoBehaviour, Expression<Action> expr)
+    {
+        return monoBehaviour.IsInvoking(GetMethodName(expr));
+    }
+
+    public static void CancelInvoke(this MonoBehaviour monoBehaviour, Expression<Action> expr)
+    {
+        monoBehaviour.CancelInvoke(GetMethodName(expr));
+    }
+
+    //bool isInvoking = this.IsInvoking(() => InvokedFunc());
+    public static void InvokeRepeating(this MonoBehaviour monoBehaviour, Expression<Action> expr, float time, float repeatRate)
+    {
+        monoBehaviour.InvokeRepeating(GetMethodName(expr), time, repeatRate);
+    }
+
+    #endregion
 
     public static T GetFieldValue<T>(this object o, string name)
     {
@@ -507,8 +538,139 @@ public sealed class FuncUtil
 }
 #endregion
 
+#region Component拓展
+public static class ComponentUtil
+{
+    #region Methods
+    public static T Create<T>() where T : Component
+    {
+        return Create<T>(typeof(T).Name);
+    }
+
+    public static T Create<T>(string name) where T : Component
+    {
+        return (T)Create(typeof(T), name);
+    }
+
+    public static Component Create(Type t)
+    {
+        return Create(t, t.Name);
+    }
+
+    public static Component Create(Type t, string name)
+    {
+        return new GameObject(name).AddComponent(t);
+    }
+
+    public static void SetEnabledAll(
+        bool enabled,
+        params Behaviour[] behaviors)
+    {
+        foreach (var b in behaviors)
+        {
+            if (b != null)
+            {
+                b.enabled = enabled;
+            }
+        }
+    }
+    #endregion
+}
+#endregion
+
+#region 协程拓展
+public sealed class EmptyMonoBehaviour : MonoBehaviour { }
+
+public static class CoroutineUtil
+{
+    #region Fields
+    private static readonly Dictionary<string, Coroutine> _keyedRoutines =
+        new Dictionary<string, Coroutine>();
+
+    private static EmptyMonoBehaviour _surrogate;
+
+    #endregion
+
+    #region Properties
+
+    private static EmptyMonoBehaviour Surrogate
+    {
+        get
+        {
+            EnsureSurrogate();
+
+            return _surrogate;
+        }
+    }
+    #endregion
+
+    #region Methods
+    public static Coroutine StartCoroutine(IEnumerator routine)
+    {
+        return Surrogate.StartCoroutine(routine);
+    }
+
+    public static Coroutine StartCoroutine(string key, IEnumerator routine)
+    {
+        var coroutine = Surrogate.StartCoroutine(routine);
+        _keyedRoutines.Add(key, coroutine);
+
+        return coroutine;
+    }
+
+    public static void StopAllCoroutines()
+    {
+        Surrogate.StopAllCoroutines();
+        _keyedRoutines.Clear();
+    }
+
+    public static void StopKeyedCoroutines()
+    {
+        foreach (var coroutine in _keyedRoutines.Values)
+        {
+            StopCoroutine(coroutine);
+        }
+
+        _keyedRoutines.Clear();
+    }
+
+    public static void StopCoroutine(IEnumerator routine)
+    {
+        Surrogate.StopCoroutine(routine);
+    }
+
+    public static void StopCoroutine(Coroutine routine)
+    {
+        Surrogate.StopCoroutine(routine);
+    }
+
+    public static void StopCoroutine(string key)
+    {
+        Coroutine routine;
+
+        if (_keyedRoutines.TryGetValue(key, out routine))
+        {
+            Surrogate.StopCoroutine(routine);
+        }
+    }
+
+    private static void EnsureSurrogate()
+    {
+        if (!_surrogate)
+        {
+            _surrogate =
+                ComponentUtil.Create<EmptyMonoBehaviour>("CoroutineUtilitySurrogate");
+
+            _surrogate.hideFlags = HideFlags.NotEditable;
+            UnityEngine.Object.DontDestroyOnLoad(_surrogate);
+        }
+    }
+    #endregion
+}
+#endregion
+
 #region 数学
-public sealed class MathHelpr
+public static class MathHelpr
 {
     /// <summary>求一条线上某一x值对应的y值</summary>
     public static float GetYByStartEndPointAndX(Vector2 startPoint, Vector2 endPoint, float x)
@@ -776,6 +938,23 @@ public sealed class MathHelpr
             return Mathf.PerlinNoise(0, Time.time);
         else
             return Mathf.PerlinNoise(Time.time, Time.time);
+    }
+
+    public static Vector2 MakePixelPerfect(this Vector2 position)
+    {
+        return new Vector2((int)position.x, (int)position.y);
+    }
+
+    public static Vector2 Rotate(this Vector2 vector, float angle)
+    {
+        return Quaternion.AngleAxis(angle, Vector3.forward) * vector;
+    }
+
+    public static float Angle(this Vector2 direction)
+    {
+        return direction.y > 0
+                   ? Vector2.Angle(new Vector2(1, 0), direction)
+                   : -Vector2.Angle(new Vector2(1, 0), direction);
     }
 }
 
@@ -1979,7 +2158,6 @@ public static class LinqUtil
     }
 
     #region 排序算法
-
     #region 归并排序
     /// <summary>
     /// 归并排序
@@ -2201,8 +2379,6 @@ public static class LinqUtil
             list.Clear();
         }
     }
-
-
     #endregion
 
     #endregion
@@ -2313,16 +2489,259 @@ public static class LinqUtil
         }
         return num;
     }
+}
 
+//alist = list.Distinct(new ListComparer<int>((p1, p2) => p1 == p2)).ToList();
+/// <summary>
+/// 去除重复元素
+/// </summary>
+public class ListComparer<T> : IEqualityComparer<T>
+{
+    public delegate bool EqualsComparer<F>(F x, F y);
 
-    #region 随机数
-    /// <summary>获取array随机值</summary>
-    public static T GetRandom<T>(this T[] array)
+    public EqualsComparer<T> equalsComparer;
+
+    public ListComparer(EqualsComparer<T> _euqlsComparer)
     {
-        if (array == null || array.Length == 0)
+        this.equalsComparer = _euqlsComparer;
+    }
+    public bool Equals(T x, T y)
+    {
+        if (null != equalsComparer)
+            return equalsComparer(x, y);
+        else
+            return false;
+    }
+    public int GetHashCode(T obj)
+    {
+        return obj.ToString().GetHashCode();
+    }
+}
+
+#endregion
+
+#region 随机数
+public static class RandomUtil
+{
+    /// <summary>
+    /// Return random bool value.
+    /// </summary>
+    public static bool NextBool()
+    {
+        return Random.Range(0, 2) == 0;
+    }
+
+    /// <summary>
+    /// Return random item from item1 and item2 set.
+    /// </summary>
+    public static T Next<T>(T item1, T item2)
+    {
+        return NextBool() ? item1 : item2;
+    }
+
+    /// <summary>
+    /// Return random item from item1, item2 and item3 set.
+    /// </summary>
+    public static T Next<T>(T item1, T item2, T item3)
+    {
+        int n = Random.Range(0, 3);
+        return n == 0 ? item1 : (n == 1 ? item2 : item3);
+    }
+
+    /// <summary>
+    /// Return random item from array.
+    /// </summary>
+    public static T NextItem<T>(T[] array)
+    {
+        return array[Random.Range(0, array.Length)];
+    }
+
+    /// <summary>
+    /// Return random item from list.
+    /// </summary>
+    public static T NextItem<T>(List<T> list)
+    {
+        return list[Random.Range(0, list.Count)];
+    }
+
+    /// <summary>
+    /// Return random enum item.
+    /// </summary>
+    public static T NextEnum<T>()
+    {
+        var values = Enum.GetValues(typeof(T));
+        return (T)values.GetValue(Random.Range(0, values.Length));
+    }
+
+    /// <summary>
+    /// Return random index of passed array. Index random selection is based on array weights.
+    /// </summary>
+    public static int NextWeightedInd(int[] weights)
+    {
+        int randomPoint = Random.Range(0, weights.Sum()) + 1;
+        int sum = 0;
+        for (int i = 0; i < weights.Length; i++)
+        {
+            sum += weights[i];
+            if (randomPoint <= sum)
+                return i;
+        }
+        throw new Exception("Logic error!");
+    }
+
+    /// <summary>
+    /// Return random index of passed array. Index random selection is based on array weights.
+    /// </summary>
+    public static int NextWeightedInd(float[] weights)
+    {
+        float randomPoint = Random.Range(0f, weights.Sum());
+        float sum = 0f;
+        for (int i = 0; i < weights.Length; i++)
+        {
+            sum += weights[i];
+            if (randomPoint <= sum)
+                return i;
+        }
+        throw new Exception("Logic error!");
+    }
+
+    /// <summary>
+    /// Return sub-list of random items from origin list without repeating.
+    /// </summary>
+    public static List<T> Take<T>(List<T> list, int count)
+    {
+        List<T> items = new List<T>();
+        List<int> remainedIndexes = Enumerable.Range(0, list.Count).ToList();
+        for (int i = 0; i < count; i++)
+        {
+            int selectedIndex = NextItem(remainedIndexes);
+            remainedIndexes.Remove(selectedIndex);
+            items.Add(list[selectedIndex]);
+        }
+        return items;
+    }
+
+    /// <summary>
+    /// Shuffle list of items.
+    /// </summary>
+    public static void Shuffle<T>(this List<T> list)
+    {
+        for (int i = 1; i < list.Count; i++)
+        {
+            int indRnd = Random.Range(0, i + 1);
+            T temp = list[i];
+            list[i] = list[indRnd];
+            list[indRnd] = temp;
+        }
+    }
+
+    /// <summary>
+    /// Shuffle array of items.
+    /// </summary>
+    public static void Shuffle<T>(T[] array)
+    {
+        for (int i = 1; i < array.Length; i++)
+        {
+            int indRnd = Random.Range(0, i + 1);
+            T temp = array[i];
+            array[i] = array[indRnd];
+            array[indRnd] = temp;
+        }
+    }
+
+    /// <summary>
+    /// Return random point on line.
+    /// </summary>
+    public static Vector2 NextPointOnLine(Vector2 point1, Vector2 point2)
+    {
+        float t = Random.Range(0f, 1f);
+        return new Vector2(Mathf.Lerp(point1.x, point2.x, t), Mathf.Lerp(point1.y, point2.y, t));
+    }
+
+    /// <summary>
+    /// Return random point on line.
+    /// </summary>
+    public static Vector3 NextPointOnLine(Vector3 point1, Vector3 point2)
+    {
+        float t = Random.Range(0f, 1f);
+        return new Vector3(Mathf.Lerp(point1.x, point2.x, t), Mathf.Lerp(point1.y, point2.y, t), Mathf.Lerp(point1.z, point2.z, t));
+    }
+
+    /// <summary>
+    /// Get a chance with given percentage. If percentage is 25 it will return true each 4th time on an average.
+    /// </summary>
+    public static bool GetChance(int percentage)
+    {
+        return Random.Range(0, 100) + 1 <= percentage;
+    }
+
+    /// <summary>
+    /// Gets a chance with give probability. If probability is 0.25 it will return true each 4th time on an average.
+    /// </summary>
+    public static bool GetChance(float probability)
+    {
+        return Random.Range(0f, 1f) < probability;
+    }
+
+    /// <summary>
+    /// Get random normalized 2D direction as Vector2.
+    /// </summary>
+    public static Vector2 NextDirection()
+    {
+        return Random.insideUnitCircle.normalized;
+    }
+
+    /// <summary>
+    /// Return Random.Range between two values which are stored in pairMinMax Vector2.
+    /// Where pairMinMax.x is min value and pairMinMax.y is max value.
+    /// </summary>
+    public static float Range(Vector2 pairMinMax)
+    {
+        return Random.Range(pairMinMax.x, pairMinMax.y);
+    }
+
+    /// <summary>
+    /// Return random point from rect bound (inside rect).
+    /// </summary>
+    public static Vector2 NextPointOnRect(Rect rect)
+    {
+        return new Vector2(Random.Range(rect.xMin, rect.xMax), Random.Range(rect.yMin, rect.yMax));
+    }
+
+    /// <summary>
+    /// Return random point on rect border (perimeter of rect).
+    /// </summary>
+    public static Vector2 NextPointOnRectBorder(Rect rect)
+    {
+        float perimeterLength = (rect.width + rect.height) * 2f;
+        float pointOnPerimeter = Random.Range(0f, perimeterLength);
+
+        if (pointOnPerimeter < rect.width)//top border
+            return new Vector2(rect.xMin + pointOnPerimeter, rect.yMax);
+
+        pointOnPerimeter -= rect.width;
+
+        if (pointOnPerimeter < rect.height)//right border
+            return new Vector2(rect.xMax, rect.yMin + pointOnPerimeter);
+
+        pointOnPerimeter -= rect.height;
+
+        if (pointOnPerimeter < rect.width)//bottom border
+            return new Vector2(rect.xMin + pointOnPerimeter, rect.yMin);
+
+        pointOnPerimeter -= rect.width;
+
+        //left border
+        return new Vector2(rect.xMin, rect.yMin + pointOnPerimeter);
+    }
+
+    /// <summary>获取array随机值</summary>
+    public static T GetRandom<T>(this T[] arrary)
+    {
+        if (arrary == null || arrary.Length == 0)
             return default(T);
 
-        return array[UnityEngine.Random.Range(0, array.Length)];
+        return arrary[Random.Range(0, arrary.Length)];
     }
 
     /// <summary>获取List随机值</summary>
@@ -2331,7 +2750,7 @@ public static class LinqUtil
         if (list == null || list.Count == 0)
             return default(T);
 
-        return list[UnityEngine.Random.Range(0, list.Count)];
+        return list[Random.Range(0, list.Count)];
     }
 
     /// <summary>获取正负随机值</summary>
@@ -2351,7 +2770,7 @@ public static class LinqUtil
         int random;
         do
         {
-            random = UnityEngine.Random.Range(min, max);
+            random = Random.Range(min, max);
         }
         while (lastRandom * random >= 0);
         lastRandom = random;
@@ -2370,7 +2789,7 @@ public static class LinqUtil
         int random;
         do
         {
-            random = UnityEngine.Random.Range(min, max);
+            random = Random.Range(min, max);
         }
         while (Math.Abs(lastRandom - random) < step);
         lastRandom = random;
@@ -2380,7 +2799,7 @@ public static class LinqUtil
     /// <summary>curve.Evaluate(Random.value)参数是随机出的一个值，可以认为是图中的横坐标，函数会返回它所对应的竖坐标的值</summary>
     public static float GetRandom(AnimationCurve curve)
     {
-        return curve.Evaluate(UnityEngine.Random.value);
+        return curve.Evaluate(Random.value);
     }
 
     /// <summary>curve.Evaluate(Random.value)参数是随机出的一个值，可以认为是图中的横坐标，函数会返回它所对应的竖坐标的值</summary>
@@ -2396,7 +2815,7 @@ public static class LinqUtil
         foreach (float elem in probs)
             total += elem;
 
-        float randomPoint = UnityEngine.Random.value * total;
+        float randomPoint = Random.value * total;
         for (int i = 0; i < probs.Length; i++)
         {
             if (randomPoint < probs[i])
@@ -2413,7 +2832,7 @@ public static class LinqUtil
         for (int i = 0; i < cards.Length; i++)
         {
             int temp = cards[i];
-            int randomIndex = UnityEngine.Random.Range(0, cards.Length);
+            int randomIndex = Random.Range(0, cards.Length);
             cards[i] = cards[randomIndex];
             cards[randomIndex] = temp;
         }
@@ -2451,7 +2870,7 @@ public static class LinqUtil
                 list.Add(item);
             }
             list.Add(TotalNum);
-            InsertSort<uint>(list, true, new uint[0]);
+            LinqUtil.InsertSort<uint>(list, true, new uint[0]);
             for (int j = 0; j < list.Count - 1; j++)
             {
                 list2.Add((uint)Math.Abs((long)((ulong)(list[j + 1] - list[j]))));
@@ -2494,7 +2913,7 @@ public static class LinqUtil
         for (int numLeft = spawnPoints.Length; numLeft > 0; numLeft--)
         {
             float prob = ((float)numToChoose) / ((float)numLeft);
-            if (UnityEngine.Random.value < prob)
+            if (Random.value < prob)
             {
                 numToChoose--;
                 result[numToChoose] = spawnPoints[numLeft - 1];
@@ -2528,42 +2947,13 @@ public static class LinqUtil
         int[] resultArray = new int[startList.Count];
         for (int i = 0; i < N; i++)
         {
-            int seed = UnityEngine.Random.Range(0, startList.Count - i);
+            int seed = Random.Range(0, startList.Count - i);
             resultArray[i] = startList[seed];
             startList[seed] = startList[startList.Count - i - 1];
             setList.Add(resultArray[i]);
         }
     }
-    #endregion
 }
-
-//alist = list.Distinct(new ListComparer<int>((p1, p2) => p1 == p2)).ToList();
-/// <summary>
-/// 去除重复元素
-/// </summary>
-public class ListComparer<T> : IEqualityComparer<T>
-{
-    public delegate bool EqualsComparer<F>(F x, F y);
-
-    public EqualsComparer<T> equalsComparer;
-
-    public ListComparer(EqualsComparer<T> _euqlsComparer)
-    {
-        this.equalsComparer = _euqlsComparer;
-    }
-    public bool Equals(T x, T y)
-    {
-        if (null != equalsComparer)
-            return equalsComparer(x, y);
-        else
-            return false;
-    }
-    public int GetHashCode(T obj)
-    {
-        return obj.ToString().GetHashCode();
-    }
-}
-
 #endregion
 
 #region Texture拓展
@@ -2715,8 +3105,13 @@ public enum STRING_COLOR
     CGray
 }
 
-public sealed class ColorUtil
+public static class ColorUtil
 {
+    public static Color SetA(this Color color, float a)
+    {
+        return new Color(color.r, color.g, color.b, a);
+    }
+
     public static string SetStringColor(string str, STRING_COLOR strColor)
     {
         //基色
@@ -3800,19 +4195,19 @@ public static class GameObjectExtension
 
     public static GameObject SetLoclEular(this GameObject selfObj, Vector3 eulerAngle)
     {
-        TransformUtil.SetLocalAngle(selfObj.transform, eulerAngle);
+        TransformExtensions.SetLocalAngle(selfObj.transform, eulerAngle);
         return selfObj;
     }
 
     public static GameObject SetLocalPos(this GameObject selfObj, Vector3 pos)
     {
-        TransformUtil.SetLocalPos(selfObj.transform, pos);
+        TransformExtensions.SetLocalPos(selfObj.transform, pos);
         return selfObj;
     }
 
     public static GameObject SetScale(this GameObject selfObj, Vector3 scale)
     {
-        TransformUtil.SetLocalScale(selfObj.transform, scale);
+        TransformExtensions.SetLocalScale(selfObj.transform, scale);
         return selfObj;
     }
 
@@ -3828,24 +4223,21 @@ public static class GameObjectExtension
 #endregion
 
 #region Transform拓展
-public static class TransformUtil
+public static class TransformExtensions
 {
     public static void SetX(this Transform transform, float x)
     {
-        Vector3 newPosition = new Vector3(x, transform.position.y, transform.position.z);
-        transform.position = newPosition;
+        transform.position = new Vector3(x, transform.position.y, transform.position.z);
     }
 
     public static void SetY(this Transform transform, float y)
     {
-        Vector3 newPosition = new Vector3(transform.position.x, y, transform.position.z);
-        transform.position = newPosition;
+        transform.position = new Vector3(transform.position.x, y, transform.position.z);
     }
 
     public static void SetZ(this Transform transform, float z)
     {
-        Vector3 newPosition = new Vector3(transform.position.x, transform.position.y, z);
-        transform.position = newPosition;
+        transform.position = new Vector3(transform.position.x, transform.position.y, z);
     }
 
     public static void SetXY(this Transform transform, Vector3 position)
@@ -3870,20 +4262,17 @@ public static class TransformUtil
 
     public static void SetLocalX(this Transform transform, float x)
     {
-        Vector3 newPosition = new Vector3(x, transform.localPosition.y, transform.localPosition.z);
-        transform.localPosition = newPosition;
+        transform.localPosition = new Vector3(x, transform.localPosition.y, transform.localPosition.z);
     }
 
     public static void SetLocalY(this Transform transform, float y)
     {
-        Vector3 newPosition = new Vector3(transform.localPosition.x, y, transform.localPosition.z);
-        transform.localPosition = newPosition;
+        transform.localPosition = new Vector3(transform.localPosition.x, y, transform.localPosition.z);
     }
 
     public static void SetLocalZ(this Transform transform, float z)
     {
-        Vector3 newPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, z);
-        transform.localPosition = newPosition;
+        transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, z);
     }
 
     public static void SetLocalEulerAngles(this Transform transform, Vector3 eulerAngles)
@@ -3893,20 +4282,17 @@ public static class TransformUtil
 
     public static void SetLocalEulerX(this Transform transform, float x)
     {
-        Vector3 newLocalEulerAngles = new Vector3(x, transform.localEulerAngles.y, transform.localEulerAngles.z);
-        transform.localEulerAngles = newLocalEulerAngles;
+        transform.localEulerAngles = new Vector3(x, transform.localEulerAngles.y, transform.localEulerAngles.z);
     }
 
     public static void SetLocalEulerY(this Transform transform, float y)
     {
-        Vector3 newLocalEulerAngles = new Vector3(transform.localEulerAngles.x, y, transform.localEulerAngles.z);
-        transform.localEulerAngles = newLocalEulerAngles;
+        transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, y, transform.localEulerAngles.z);
     }
 
     public static void SetLocalEulerZ(this Transform transform, float z)
     {
-        Vector3 newLocalEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
-        transform.localEulerAngles = newLocalEulerAngles;
+        transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
     }
 
     public static void SetSizeDelta(this RectTransform rectTransfrom, Vector2 size)
@@ -3967,20 +4353,17 @@ public static class TransformUtil
 
     public static void SetLocalScaleX(this Transform transform, float x)
     {
-        Vector3 newScale = new Vector3(x, transform.localScale.y, transform.localScale.z);
-        transform.localScale = newScale;
+        transform.localScale = new Vector3(x, transform.localScale.y, transform.localScale.z);
     }
 
     public static void SetLocalScaleY(this Transform transform, float y)
     {
-        Vector3 newScale = new Vector3(transform.localScale.x, y, transform.localScale.z);
-        transform.localScale = newScale;
+        transform.localScale = new Vector3(transform.localScale.x, y, transform.localScale.z);
     }
 
     public static void SetLocalScaleZ(this Transform transform, float z)
     {
-        Vector3 newScale = new Vector3(transform.localScale.x, transform.localScale.y, z);
-        transform.localScale = newScale;
+        transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, z);
     }
 
     public static void SetLocalAngle(this Transform transform, Vector3 eulerAngle)
@@ -4001,6 +4384,36 @@ public static class TransformUtil
     public static void SetLocalAngleZ(this Transform transform, float z)
     {
         transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
+    }
+
+    public static void IncX(this Transform transform, float dx)
+    {
+        SetX(transform, transform.position.x + dx);
+    }
+
+    public static void IncLocalX(this Transform transform, float dx)
+    {
+        SetLocalX(transform, transform.localPosition.x + dx);
+    }
+
+    public static void IncY(this Transform transform, float dy)
+    {
+        SetY(transform, transform.position.y + dy);
+    }
+
+    public static void IncLocalY(this Transform transform, float dy)
+    {
+        SetLocalY(transform, transform.localPosition.y + dy);
+    }
+
+    public static void IncZ(this Transform transform, float dz)
+    {
+        SetZ(transform, transform.position.z + dz);
+    }
+
+    public static void IncLocalZ(this Transform transform, float dz)
+    {
+        SetLocalZ(transform, transform.localPosition.z + dz);
     }
 
     /// <summary>获得一级子物体</summary>
@@ -4232,12 +4645,222 @@ public enum AlginDir
 }
 #endregion
 
+#region RectTransform拓展
+public enum AnchorPresets
+{
+    TopLeft,
+    TopCenter,
+    TopRight,
+
+    MiddleLeft,
+    MiddleCenter,
+    MiddleRight,
+
+    BottomLeft,
+    BottonCenter,
+    BottomRight,
+    BottomStretch,
+
+    VertStretchLeft,
+    VertStretchRight,
+    VertStretchCenter,
+
+    HorStretchTop,
+    HorStretchMiddle,
+    HorStretchBottom,
+
+    StretchAll
+}
+
+public enum PivotPresets
+{
+    TopLeft,
+    TopCenter,
+    TopRight,
+
+    MiddleLeft,
+    MiddleCenter,
+    MiddleRight,
+
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+}
+
+public static class RectTransformExtensions
+{
+    public static void SetAnchor(this RectTransform source, AnchorPresets allign, int offsetX = 0, int offsetY = 0)
+    {
+        source.anchoredPosition = new Vector3(offsetX, offsetY, 0);
+
+        switch (allign)
+        {
+            case (AnchorPresets.TopLeft):
+                {
+                    source.anchorMin = new Vector2(0, 1);
+                    source.anchorMax = new Vector2(0, 1);
+                    break;
+                }
+            case (AnchorPresets.TopCenter):
+                {
+                    source.anchorMin = new Vector2(0.5f, 1);
+                    source.anchorMax = new Vector2(0.5f, 1);
+                    break;
+                }
+            case (AnchorPresets.TopRight):
+                {
+                    source.anchorMin = new Vector2(1, 1);
+                    source.anchorMax = new Vector2(1, 1);
+                    break;
+                }
+
+            case (AnchorPresets.MiddleLeft):
+                {
+                    source.anchorMin = new Vector2(0, 0.5f);
+                    source.anchorMax = new Vector2(0, 0.5f);
+                    break;
+                }
+            case (AnchorPresets.MiddleCenter):
+                {
+                    source.anchorMin = new Vector2(0.5f, 0.5f);
+                    source.anchorMax = new Vector2(0.5f, 0.5f);
+                    break;
+                }
+            case (AnchorPresets.MiddleRight):
+                {
+                    source.anchorMin = new Vector2(1, 0.5f);
+                    source.anchorMax = new Vector2(1, 0.5f);
+                    break;
+                }
+
+            case (AnchorPresets.BottomLeft):
+                {
+                    source.anchorMin = new Vector2(0, 0);
+                    source.anchorMax = new Vector2(0, 0);
+                    break;
+                }
+            case (AnchorPresets.BottonCenter):
+                {
+                    source.anchorMin = new Vector2(0.5f, 0);
+                    source.anchorMax = new Vector2(0.5f, 0);
+                    break;
+                }
+            case (AnchorPresets.BottomRight):
+                {
+                    source.anchorMin = new Vector2(1, 0);
+                    source.anchorMax = new Vector2(1, 0);
+                    break;
+                }
+
+            case (AnchorPresets.HorStretchTop):
+                {
+                    source.anchorMin = new Vector2(0, 1);
+                    source.anchorMax = new Vector2(1, 1);
+                    break;
+                }
+            case (AnchorPresets.HorStretchMiddle):
+                {
+                    source.anchorMin = new Vector2(0, 0.5f);
+                    source.anchorMax = new Vector2(1, 0.5f);
+                    break;
+                }
+            case (AnchorPresets.HorStretchBottom):
+                {
+                    source.anchorMin = new Vector2(0, 0);
+                    source.anchorMax = new Vector2(1, 0);
+                    break;
+                }
+
+            case (AnchorPresets.VertStretchLeft):
+                {
+                    source.anchorMin = new Vector2(0, 0);
+                    source.anchorMax = new Vector2(0, 1);
+                    break;
+                }
+            case (AnchorPresets.VertStretchCenter):
+                {
+                    source.anchorMin = new Vector2(0.5f, 0);
+                    source.anchorMax = new Vector2(0.5f, 1);
+                    break;
+                }
+            case (AnchorPresets.VertStretchRight):
+                {
+                    source.anchorMin = new Vector2(1, 0);
+                    source.anchorMax = new Vector2(1, 1);
+                    break;
+                }
+
+            case (AnchorPresets.StretchAll):
+                {
+                    source.anchorMin = new Vector2(0, 0);
+                    source.anchorMax = new Vector2(1, 1);
+                    break;
+                }
+        }
+    }
+
+    public static void SetPivot(this RectTransform source, PivotPresets preset)
+    {
+        switch (preset)
+        {
+            case (PivotPresets.TopLeft):
+                {
+                    source.pivot = new Vector2(0, 1);
+                    break;
+                }
+            case (PivotPresets.TopCenter):
+                {
+                    source.pivot = new Vector2(0.5f, 1);
+                    break;
+                }
+            case (PivotPresets.TopRight):
+                {
+                    source.pivot = new Vector2(1, 1);
+                    break;
+                }
+
+            case (PivotPresets.MiddleLeft):
+                {
+                    source.pivot = new Vector2(0, 0.5f);
+                    break;
+                }
+            case (PivotPresets.MiddleCenter):
+                {
+                    source.pivot = new Vector2(0.5f, 0.5f);
+                    break;
+                }
+            case (PivotPresets.MiddleRight):
+                {
+                    source.pivot = new Vector2(1, 0.5f);
+                    break;
+                }
+
+            case (PivotPresets.BottomLeft):
+                {
+                    source.pivot = new Vector2(0, 0);
+                    break;
+                }
+            case (PivotPresets.BottomCenter):
+                {
+                    source.pivot = new Vector2(0.5f, 0);
+                    break;
+                }
+            case (PivotPresets.BottomRight):
+                {
+                    source.pivot = new Vector2(1, 0);
+                    break;
+                }
+        }
+    }
+}
+#endregion
+
 #region Graphic
 public static class MaskableGraphicExtension
 {
     public static MaskableGraphic SetSizeDelta(this MaskableGraphic graphic, Vector2 sizeDelta)
     {
-        TransformUtil.SetSizeDelta(graphic.rectTransform, sizeDelta);
+        TransformExtensions.SetSizeDelta(graphic.rectTransform, sizeDelta);
         return graphic;
     }
 
@@ -4315,6 +4938,72 @@ public static class MaskableGraphicExtension
         }
         return graphic;
     }
+
+    #region World positions
+
+    private static Vector3[] _fourCorners = new Vector3[4];//start bottom left and clockwise
+
+    public static Vector2 GetWorldCenter(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return new Vector2((_fourCorners[0].x + _fourCorners[3].x) / 2f, (_fourCorners[0].y + _fourCorners[1].y) / 2f);
+    }
+
+    public static float GetWorldLeft(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return _fourCorners[0].x;
+    }
+
+    public static float GetWorldRight(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return _fourCorners[2].x;
+    }
+
+    public static float GetWorldTop(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return _fourCorners[1].y;
+    }
+
+    public static float GetWorldBottom(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return _fourCorners[0].y;
+    }
+
+    public static Vector2 GetWorldTopLeft(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return new Vector2(_fourCorners[0].x, _fourCorners[1].y);
+    }
+
+    public static Vector2 GetWorldTopRight(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return new Vector2(_fourCorners[2].x, _fourCorners[1].y);
+    }
+
+    public static Vector2 GetWorldBottomLeft(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return new Vector2(_fourCorners[0].x, _fourCorners[0].y);
+    }
+
+    public static Vector2 GetWorldBottomRight(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return new Vector2(_fourCorners[2].x, _fourCorners[0].y);
+    }
+
+    public static Rect GetWorldRect(this RectTransform rectTransform)
+    {
+        rectTransform.GetWorldCorners(_fourCorners);
+        return new Rect(_fourCorners[0].x, _fourCorners[0].y, Mathf.Abs(_fourCorners[3].x - _fourCorners[0].x), Mathf.Abs(_fourCorners[1].y - _fourCorners[0].y));
+    }
+
+    #endregion
 
     #region 获取鼠标点中的图片像素点的颜色
     //https://blog.csdn.net/hany3000/article/details/46385005

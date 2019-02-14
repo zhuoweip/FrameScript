@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UICore;
+﻿using UICore;
 using UnityEngine;
 
 /// <summary>

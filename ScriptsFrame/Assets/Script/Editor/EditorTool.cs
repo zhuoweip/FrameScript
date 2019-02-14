@@ -1,15 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
-using System.IO;
-using UnityEditor.SceneManagement;
+using System.Linq;
 
-public class EditorTool : Editor {
+public class EditorTool
+{
+    public static T[] FindAssets<T>(string search = "") where T : Object
+    {
+        return AssetDatabase.FindAssets(string.Format("{0} {1}{2}", search, "t:", typeof(T).Name)/*$"{search} t:{typeof(T).Name}"*/)
+            .Select(AssetDatabase.GUIDToAssetPath)
+            .Select(AssetDatabase.LoadAssetAtPath<T>)
+            .ToArray();
+    }
 
     [MenuItem("Assets/Tool/对比两个文件夹图片")]
-    static void CheckTwoFolderTexName()
+    public static void CheckTwoFolderTexName()
     {
         Object[] objects = Selection.GetFiltered(typeof(Object), SelectionMode.Assets);
         if (objects.Length != 2)
@@ -17,13 +24,13 @@ public class EditorTool : Editor {
             Debug.LogError(string.Format("{0}", "文件夹个数不为2"));
             return;
         }
-        
+
         List<string>[] lists = new List<string>[objects.Length];
         for (int i = 0; i < objects.Length; i++)
         {
             lists[i] = new List<string>();
             DirectoryInfo directInfo = new DirectoryInfo(AssetDatabase.GetAssetPath(objects[i]));
-            
+
             string imgtype = "*.BMP|*.JPG|*.GIF|*.PNG";
             string[] ImageType = imgtype.Split('|');
             for (int j = 0; j < ImageType.Length; j++)
@@ -37,7 +44,7 @@ public class EditorTool : Editor {
             }
         }
 
-        List<string> sameList = LinqUtil.CustomIntersect(lists[0],lists[1]);
+        List<string> sameList = LinqUtil.CustomIntersect(lists[0], lists[1]);
         List<string> differenceList = LinqUtil.CustomExcept(lists[0], lists[1]);
 
         for (int i = 0; i < sameList.Count; i++)
@@ -48,7 +55,7 @@ public class EditorTool : Editor {
     }
 
     [MenuItem("Assets/Tool/移除图片前后空格")]
-    static void TrimTextureName()
+    public static void TrimTextureName()
     {
         Object[] objects = Selection.GetFiltered(typeof(Object), SelectionMode.Assets);
         for (int i = 0; i < objects.Length; i++)
@@ -73,8 +80,8 @@ public class EditorTool : Editor {
 
     /// <summary>快捷键 Ctrl+Shift + C ===>复制选中两个游戏对象之间的查找路径x ：transform.FindChild("路径x")
     /// </summary>
-    [MenuItem("GameObject/Tool/Copy Find Child Path _%#_ C",false,-1)]
-    static void CopyFindChildPath()
+    [MenuItem("GameObject/Tool/Copy Find Child Path _%#_ C", false, -1)]
+    public static void CopyFindChildPath()
     {
         //Object[] objAry = Selection.objects;
         //if (objAry.Length == 2)
@@ -156,7 +163,7 @@ public class EditorTool : Editor {
 
 
     [MenuItem("GameObject/Tool/对齐相机和Canvas ", false, -1)]
-    static void CameraCanvasAlign()
+    public static void CameraCanvasAlign()
     {
         GameObject[] gameObjs = Selection.gameObjects;
         if (gameObjs.Length != 2)
@@ -171,7 +178,7 @@ public class EditorTool : Editor {
             Debug.LogError("No camera or canvas");
             return;
         }
- 
+
         camera.transform.position = canvas.transform.position;
         Vector3 pos = camera.transform.position;
         camera.transform.position = new Vector3(pos.x, pos.y, -10);
@@ -179,7 +186,7 @@ public class EditorTool : Editor {
         camera.orthographicSize = canvas.GetComponent<RectTransform>().sizeDelta.y / 2;
     }
 
-    static T GetComponent<T>(GameObject[] objs) where T:Component
+    static T GetComponent<T>(GameObject[] objs) where T : Component
     {
         T t = null;
         foreach (var item in objs)
@@ -197,7 +204,7 @@ public class EditorTool : Editor {
     /// RawImage 转 Image
     /// </summary>
     [MenuItem("GameObject/Tool/RawImage->Image ", false, -1)]
-    static void ReplaceRawImageToImage()
+    public static void ReplaceRawImageToImage()
     {
         Dictionary<GameObject, string> dic = new Dictionary<GameObject, string>();
         GameObject[] gos = Selection.gameObjects;
@@ -221,7 +228,7 @@ public class EditorTool : Editor {
     /// Image 转 RawImage
     /// </summary>
     [MenuItem("GameObject/Tool/Image->RawImage ", false, -1)]
-    static void ReplaceImageToRawImage()
+    public static void ReplaceImageToRawImage()
     {
         Dictionary<GameObject, string> dic = new Dictionary<GameObject, string>();
         GameObject[] gos = Selection.gameObjects;

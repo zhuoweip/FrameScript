@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System;
 using System.Runtime.InteropServices;
-using System;
+using UnityEngine;
 /*xbb
  * 系统方法类  http://www.office-cn.net/t/api/api_content.htm
  * */

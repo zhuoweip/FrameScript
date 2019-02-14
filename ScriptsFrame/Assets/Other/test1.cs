@@ -33,10 +33,28 @@ public class test1 : MonoBehaviour {
         //    print(_[0]);
         //    print(_[1]);
         //});
-        graphic.RegisterDirtyLayoutCallback(() =>
-        {
-            Debug.LogError(1);
-        });
+        //graphic.RegisterDirtyLayoutCallback(() =>
+        //{
+        //    Debug.LogError(1);
+        //});
+
+        CoroutineUtil.StartCoroutine("aa", AA());
+
+        CoroutineUtil.StartCoroutine("bb", BB());
+
+    }
+
+
+    private IEnumerator AA()
+    {
+        yield return new WaitForSeconds(2);
+        Debug.LogError(1234);
+    }
+
+    private IEnumerator BB()
+    {
+        yield return new WaitForSeconds(2);
+        Debug.LogError(5678);
     }
 
 
@@ -47,6 +65,13 @@ public class test1 : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            CoroutineUtil.StopCoroutine("aa");
+        }
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            CoroutineUtil.StopCoroutine("bb");
+        }
 	}
 }
