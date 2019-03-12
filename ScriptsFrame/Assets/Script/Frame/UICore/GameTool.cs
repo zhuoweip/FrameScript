@@ -305,6 +305,22 @@ public static class GameTool
     }
 
     /// <summary>
+    /// 世界坐标转UGUI坐标，用这个，rImg.rectTransform.anchoredPostion = World2UGUIPos(#,#,#);
+    /// </summary>
+    /// <param name="worldPos"></param>
+    /// <param name="scaler"></param>
+    /// <param name="camera"></param>
+    /// <returns></returns>
+    public static Vector2 World2UGUIPos(Vector3 worldPos,CanvasScaler scaler,Camera camera)
+    {
+        float x = scaler.referenceResolution.x;
+        float y = scaler.referenceResolution.y;
+        Vector2 viewPos = camera.WorldToViewportPoint(worldPos);
+        Vector2 uiPos = new Vector2(viewPos.x - 0.5f*x, viewPos.y - 0.5f*y);
+        return uiPos;
+    }
+
+    /// <summary>
     /// 世界坐标转UGUI坐标 坐标转换 RenderMode.Overlay
     /// </summary>
     /// <param name="worldObj"></param>
@@ -955,6 +971,18 @@ public static class MathHelpr
         return direction.y > 0
                    ? Vector2.Angle(new Vector2(1, 0), direction)
                    : -Vector2.Angle(new Vector2(1, 0), direction);
+    }
+
+    /// <summary>
+    /// 快速比较距离，两点相减然后取平方，然后用该值与某个距离值的平方进行比较，不建议使用Vector3.Distance，因为Vector3.Distance(a,b) 相当于 (a-b).magnitude，即求平方后开根，而sqrMagnitude方法省去了求平方根的操作，所以比magnitude执行快。
+    /// </summary>
+    /// <param name="v1"></param>
+    /// <param name="v2"></param>
+    /// <param name="distance"></param>
+    /// <returns></returns>
+    public static float Distance(Vector3 v1,Vector3 v2,float distance)
+    {
+        return (v1 - v2).sqrMagnitude - distance * distance;
     }
 }
 
@@ -4424,6 +4452,17 @@ public static class TransformExtensions
         for (int i = 0; i < childCount; i++)
             result[i] = transform.GetChild(i);
         return result;
+    }
+
+    /// <summary>
+    /// 移动本地坐标到某一坐标
+    /// </summary>
+    /// <param name="transform"></param>
+    /// <param name="target"></param>
+    public static void LocalMove(this Transform transform,Transform target)
+    {
+        Vector3 pos = target.TransformPoint(transform.localPosition);
+        transform.localPosition = transform.InverseTransformPoint(pos);
     }
 
     /// <summary>

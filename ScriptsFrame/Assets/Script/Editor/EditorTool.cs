@@ -26,9 +26,13 @@ public class EditorTool
         }
 
         List<string>[] lists = new List<string>[objects.Length];
+        List<FileInfo>[] fileLists = new List<FileInfo>[objects.Length];
+
         for (int i = 0; i < objects.Length; i++)
         {
             lists[i] = new List<string>();
+            fileLists[i] = new List<FileInfo>();
+
             DirectoryInfo directInfo = new DirectoryInfo(AssetDatabase.GetAssetPath(objects[i]));
 
             string imgtype = "*.BMP|*.JPG|*.GIF|*.PNG";
@@ -39,6 +43,7 @@ public class EditorTool
                 for (int k = 0; k < files.Length; k++)
                 {
                     lists[i].Add(files[k].Name);
+                    fileLists[i].Add(files[k]);
                     //Debug.Log(string.Format("{0}\n,{1}\n,{2}\n", files[k].DirectoryName, files[k].FullName, files[k].Name));
                 }
             }
@@ -52,6 +57,32 @@ public class EditorTool
 
         for (int i = 0; i < differenceList.Count; i++)
             Debug.Log("differenceList = " + differenceList[i]);
+
+        /*如果加了这句，就可以将两个不同的名字改为相同的名字
+        for (int i = 0; i < differenceList.Count; i++)
+        {
+            for (int j = 0; j < fileLists[0].Count; j++)
+            {
+                if (fileLists[0][j].Name == differenceList[i])
+                {
+                    string oldName = GetPathByFullName(fileLists[0][j].FullName);
+                    AssetDatabase.RenameAsset(oldName, fileLists[1][j].Name);
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
+            }
+        }*/
+    }
+
+    /// <summary>
+    /// AssetDatabase改名
+    /// </summary>
+    /// <param name="fullName"></param>
+    /// <returns></returns>
+    public static string GetPathByFullName(string fullName)
+    {
+        string name = fullName.Replace(@"\", "/").Replace(Application.dataPath, string.Empty);
+        return "Assets" + name;
     }
 
     [MenuItem("Assets/Tool/移除图片前后空格")]
@@ -245,6 +276,34 @@ public class EditorTool
             Undo.DestroyObjectImmediate(item.Key.GetComponent<Image>());
             Object newImg = AssetDatabase.LoadAssetAtPath(item.Value, typeof(Texture));
             Undo.AddComponent<RawImage>(item.Key).texture = newImg as Texture;
+        }
+    }
+
+    /// <summary>
+    /// 删除丢失脚本
+    /// </summary>
+    [MenuItem("GameObject/Tool/RemoveMissingScripts", false, -1)]
+    public static void RemoveMissingScript()
+    {
+        Transform[] selectionObjs = Selection.GetTransforms(SelectionMode.Deep);
+        for (int i = 0; i < selectionObjs.Length; i++)
+        {
+            Debug.Log("<color=blue>" + selectionObjs[i].name + "</color>");
+            var gameObject = selectionObjs[i].gameObject;
+            var components = gameObject.GetComponents<Component>();
+            var serializeObject = new SerializedObject(gameObject);
+            var prop = serializeObject.FindProperty("m_Component");
+
+            int r = 0;
+            for (int j = 0; j < components.Length; j++)
+            {
+                if (components[j] == null)
+                {
+                    prop.DeleteArrayElementAtIndex(j - r);
+                    r++;
+                }
+            }
+            serializeObject.ApplyModifiedProperties();
         }
     }
 }

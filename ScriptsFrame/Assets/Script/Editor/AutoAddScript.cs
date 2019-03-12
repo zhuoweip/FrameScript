@@ -16,11 +16,17 @@ public class AutoAddScript : DecoratorEditor
         RectTransform rectTransform = target as RectTransform;
         Text text = rectTransform.GetComponent<Text>();
         ContentSizeFitter contentSizeFitter = rectTransform.GetComponent<ContentSizeFitter>();
-        if (text != null && contentSizeFitter == null)
+        if (text != null)
         {
-            ContentSizeFitter contentSizeFitter_new = rectTransform.gameObject.AddComponent<ContentSizeFitter>();
-            contentSizeFitter_new.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            contentSizeFitter_new.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            if (text.raycastTarget)
+                text.raycastTarget = false;
+
+            if (contentSizeFitter == null)
+            {
+                ContentSizeFitter contentSizeFitter_new = rectTransform.gameObject.AddComponent<ContentSizeFitter>();
+                contentSizeFitter_new.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+                contentSizeFitter_new.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            }
         }
         //else if (text == null && contentSizeFitter != null)
         //{
@@ -32,7 +38,9 @@ public class AutoAddScript : DecoratorEditor
         RawImage rawImage = rectTransform.GetComponent<RawImage>();
         Image image = rectTransform.GetComponent<Image>();
         Button btn = rectTransform.GetComponent<Button>();
-        if (btn == null)
+        HorizontalOrVerticalLayoutGroup horizontalOrVerticalLayoutGroup =
+            rectTransform.GetComponentInParent<HorizontalOrVerticalLayoutGroup>();
+        if (btn == null && horizontalOrVerticalLayoutGroup == null)
         {
             if (rawImage != null && rawImage.raycastTarget)
                 rawImage.raycastTarget = false;
@@ -50,7 +58,7 @@ public class AutoAddScript : DecoratorEditor
 
         #region Scroll View 自动关闭scrollbar，设置mask锚点，添加content组件
         ScrollRect scrollRect = rectTransform.GetComponent<ScrollRect>();
-        if (scrollRect!=null)
+        if (scrollRect != null)
         {
             scrollRect.horizontalScrollbar = null;
             scrollRect.verticalScrollbar = null;
@@ -82,7 +90,7 @@ public class AutoAddScript : DecoratorEditor
         base.OnInspectorGUI();
         RectTransform rectTransform = target as RectTransform;
         ScrollRect scrollRect = rectTransform.GetComponent<ScrollRect>();
-        if (scrollRect!= null)
+        if (scrollRect != null)
         {
             Mask mask = scrollRect.GetComponentInChildren<Mask>();
             Transform content = mask.transform.Find("Content");

@@ -12,6 +12,15 @@ public class test1 : MonoBehaviour {
     public RawImage rimg;
     public MaskableGraphic graphic;
 
+    [Serializable]
+    public struct dataTool
+    {
+        public string a;
+        public int b;
+    }
+
+    public dataTool dataTools = new dataTool();
+
     void Start()
     {
         //var stream1 = Observable.Start(() =>
@@ -38,9 +47,9 @@ public class test1 : MonoBehaviour {
         //    Debug.LogError(1);
         //});
 
-        CoroutineUtil.StartCoroutine("aa", AA());
+        //CoroutineUtil.StartCoroutine("aa", AA());
 
-        CoroutineUtil.StartCoroutine("bb", BB());
+        //CoroutineUtil.StartCoroutine("bb", BB());
 
     }
 
