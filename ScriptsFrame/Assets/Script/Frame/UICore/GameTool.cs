@@ -38,6 +38,75 @@ public static class GameTool
         return FindTheChild(goParent, childName).gameObject;
     }
 
+    public static bool IsParentOf(Transform child, Transform parent)
+    {
+        bool ret = false;
+
+        Transform p = child;
+        while (p != null)
+        {
+            p = p.parent;
+            if (p == parent)
+            {
+                ret = true;
+                break;
+            }
+        }
+
+        return ret;
+    }
+
+    /// <summary>
+    /// 递归设置子物体层级
+    /// </summary>
+    /// <param name="t"></param>
+    /// <param name="layer"></param>
+    public static void SetPhysicsLayerRecursive(Transform t, int layer)
+    {
+        t.gameObject.layer = layer;
+
+        foreach (Transform child in t)
+        {
+            SetPhysicsLayerRecursive(child, layer);
+        }
+    }
+
+    /// <summary>
+    /// 获取父级层级总数
+    /// </summary>
+    /// <param name="t"></param>
+    /// <returns></returns>
+    public static int GetNodeLayer(Transform t)
+    {
+        int ret = 0;
+
+        Transform p = t.parent;
+        while (p != null)
+        {
+            ret++;
+            p = p.parent;
+        }
+        return ret;
+    }
+
+    public static Camera FindCameraForLayer(int layer)
+    {
+        int layerMask = 1 << layer;
+
+        Camera cam = Camera.main;
+        if (cam && (cam.cullingMask & layerMask) != 0) return cam;
+
+        Camera[] cameras = new Camera[Camera.allCamerasCount];
+        int camerasFound = Camera.GetAllCameras(cameras);
+        for (int i = 0; i < camerasFound; ++i)
+        {
+            cam = cameras[i];
+            if (cam && cam.enabled && (cam.cullingMask & layerMask) != 0)
+                return cam;
+        }
+        return null;
+    }
+
     /// <summary>获取子物体上面的组件</summary>
     public static T GetTheChildComponent<T>(GameObject goParent, string childName) where T : Component
     {
@@ -961,7 +1030,7 @@ public static class MathHelpr
         return new Vector2((int)position.x, (int)position.y);
     }
 
-    public static Vector2 Rotate(this Vector2 vector, float angle)
+    public static Vector2 RotateAngleAxis(this Vector2 vector, float angle)
     {
         return Quaternion.AngleAxis(angle, Vector3.forward) * vector;
     }
@@ -983,6 +1052,494 @@ public static class MathHelpr
     public static float Distance(Vector3 v1,Vector3 v2,float distance)
     {
         return (v1 - v2).sqrMagnitude - distance * distance;
+    }
+
+    public enum Side
+    {
+        None,
+        Left,
+        Right
+    }
+
+    public const float TwoPI = 2.0f * Mathf.PI;
+    public const float HalfPI = 0.5f * Mathf.PI;
+
+    //------------- Interpolates ---------------
+
+    /// <summary>
+    /// Cosine interpolation
+    /// </summary>
+    public static float Clerp(float start, float end, float t)
+    {
+        float ft = t * Mathf.PI;
+        float f = (1.0f - Mathf.Cos(ft)) * 0.5f;
+        return start * (1.0f - f) + end * f;
+    }
+
+    //-------------- 2D --------------
+
+    public static void Limit(ref Vector2 v, float limit)
+    {
+        float dSqr = v.sqrMagnitude;
+        if (dSqr > limit * limit)
+        {
+            v /= Mathf.Sqrt(dSqr);
+            v *= limit;
+        }
+    }
+
+    public static Vector2 Limit(Vector2 v, float limit)
+    {
+        Limit(ref v, limit);
+        return v;
+    }
+
+    public static Vector2 Reflect(Vector2 v, Vector2 n)
+    {
+        return v - (2.0f * Vector2.Dot(v, n)) * n;
+    }
+
+    public static Vector2 Slide(Vector2 v, Vector2 n)
+    {
+        return v - Vector2.Dot(v, n) * n;
+    }
+
+    public static float CheckSideSign(Vector2 up1, Vector2 up2)
+    {
+        return Cross(up1, up2) < 0 ? -1 : 1;
+    }
+
+    /// <summary>
+    /// Checks which side up1 is in relation to up2
+    /// </summary>
+    public static Side CheckSide(Vector2 up1, Vector2 up2)
+    {
+        float s = Cross(up1, up2);
+        return s == 0 ? Side.None : s < 0 ? Side.Right : Side.Left;
+    }
+
+    public static Vector2 Rotate(Vector2 v, float radians)
+    {
+        float c = Mathf.Cos(radians);
+        float s = Mathf.Sin(radians);
+
+        return new Vector2(v.x * c + v.y * s, -v.x * s + v.y * c);
+    }
+
+    public static Vector2 RotateAngle(Vector2 v, float angle)
+    {
+        return Rotate(v, angle * Mathf.Deg2Rad);
+    }
+
+    public static float Cross(Vector2 v1, Vector2 v2)
+    {
+        return (v1.x * v2.y) - (v1.y * v2.x);
+    }
+
+    public static Vector2 Perpendicular(Vector2 v)
+    {
+        return new Vector2(-v.y, v.x);
+    }
+
+    /// <summary>
+    /// Caps given destDir with angleLimit (degree) on either side of srcDir, returns which side the destDir is capped relative to srcDir.
+    /// </summary>
+    /// <returns>
+    /// The side destDir is relative to srcDir. (-1 or 1)
+    /// </returns>
+    public static float DirCap(Vector2 srcDir, ref Vector2 destDir, float angleLimit)
+    {
+
+        float side = CheckSideSign(srcDir, destDir);
+
+        float angle = Mathf.Acos(Vector2.Dot(srcDir, destDir));
+
+        float limitAngle = angleLimit * Mathf.Deg2Rad;
+
+        if (angle > limitAngle)
+        {
+            destDir = Rotate(srcDir, -side * limitAngle);
+        }
+
+        return side;
+    }
+
+    public static Vector2 Steer(Vector2 velocity, Vector2 desired, float cap, float factor)
+    {
+        return Limit(desired - velocity, cap) * factor;
+    }
+
+    public static Vector2 Hermite(Vector2 v1, Vector2 t1, Vector2 v2, Vector2 t2, float s)
+    {
+        float s2 = s * s, s3 = s2 * s;
+
+        float h1 = 2 * s3 - 3 * s2 + 1;          // calculate basis function 1
+        float h2 = -2 * s3 + 3 * s2;              // calculate basis function 2
+        float h3 = s3 - 2 * s2 + s;         // calculate basis function 3
+        float h4 = s3 - s2;              // calculate basis function 4
+
+        return new Vector2(
+            h1 * v1.x + h2 * v2.x + h3 * t1.x + h4 * t2.x,
+            h1 * v1.y + h2 * v2.y + h3 * t1.y + h4 * t2.y);
+    }
+
+    public static Vector2 CatMullRom(Vector2 v1, Vector2 v2, Vector2 v3, Vector2 v4, float s)
+    {
+        Vector2 t1 = new Vector2((v3.x - v1.x) * 0.5f, (v3.y - v1.y) * 0.5f);
+        Vector2 t2 = new Vector2((v4.x - v2.x) * 0.5f, (v4.y - v2.y) * 0.5f);
+
+        return Hermite(v2, t1, v3, t2, s);
+    }
+
+    /// <summary>
+    /// Compute the Barycentric (a,b,c) based on given p in relation to triangle (p0, p1, p2)
+    /// </summary>
+    public static Vector3 Barycentric(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2)
+    {
+        Vector2 v0 = p1 - p0, v1 = p2 - p0, v2 = p - p0;
+        float d00 = Vector2.Dot(v0, v0);
+        float d01 = Vector2.Dot(v0, v1);
+        float d11 = Vector2.Dot(v1, v1);
+        float d20 = Vector2.Dot(v2, v0);
+        float d21 = Vector2.Dot(v2, v1);
+        float denom = d00 * d11 - d01 * d01;
+        Vector3 ret;
+        ret.y = (d11 * d20 - d01 * d21) / denom;
+        ret.z = (d00 * d21 - d01 * d20) / denom;
+        ret.x = 1.0f - ret.y - ret.z;
+        return ret;
+    }
+
+    public static Vector2 Bezier(Vector2 p0, Vector2 p1, Vector2 p2, float t)
+    {
+        if (t == 0f) return p0;
+        if (t == 1f) return p2;
+
+        float tInv = (1 - t);
+        float a = tInv * tInv;
+        float b = 2 * tInv * t;
+        float c = t * t;
+
+        return new Vector2(a * p0.x + b * p1.x + c * p2.x, a * p0.y + b * p1.y + c * p2.y);
+    }
+
+    //-------------- 3D --------------
+
+    public static bool CompareApprox(Vector3 v1, Vector3 v2, float approx)
+    {
+        if (Mathf.Abs(v2.x - v1.x) > approx) return false;
+
+        if (Mathf.Abs(v2.y - v1.y) > approx) return false;
+
+        if (Mathf.Abs(v2.z - v1.z) > approx) return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Caps given destDir with angleLimit (degree) of srcDir, returns dir.
+    /// </summary>
+    /// <returns>
+    /// The capped dir
+    /// </returns>
+    public static Vector3 DirCap(Vector3 srcDir, Vector3 destDir, float angleLimit)
+    {
+        float angle = Mathf.Acos(Vector3.Dot(srcDir, destDir));
+
+        if (Mathf.Abs(angle) > angleLimit * Mathf.Deg2Rad)
+        {
+            Vector3 cross = Vector3.Cross(srcDir, destDir);
+            Quaternion r = Quaternion.AngleAxis(angleLimit, cross);
+            return r * srcDir;
+        }
+
+        return destDir;
+    }
+
+    public static Vector3 Steer(Vector3 velocity, Vector3 desired, float cap, float factor)
+    {
+        return Limit(desired - velocity, cap) * factor;
+    }
+
+    public static void Limit(ref Vector3 v, float limit)
+    {
+        float d = v.magnitude;
+        if (d > limit)
+        {
+            v /= d;
+            v *= limit;
+        }
+    }
+
+    public static Vector3 Limit(Vector3 v, float limit)
+    {
+        Limit(ref v, limit);
+        return v;
+    }
+
+    public static Vector3 Reflect(Vector3 v, Vector3 n)
+    {
+        return v - (2.0f * Vector3.Dot(v, n)) * n;
+    }
+
+    public static Vector3 Slide(Vector3 v, Vector3 n)
+    {
+        return v - Vector3.Dot(v, n) * n;
+    }
+
+    public static float DistanceSqr(Vector3 pt1, Vector3 pt2)
+    {
+        return Vector3.SqrMagnitude(pt1 - pt2);
+    }
+
+    public static Vector3 MidPoint(Vector3 pt1, Vector3 pt2)
+    {
+        return new Vector3((pt1.x + pt2.x) * 0.5f, (pt1.y + pt2.y) * 0.5f, (pt1.z + pt2.z) * 0.5f);
+    }
+
+    /// <summary>
+    /// get the square distance from a point to a line segment.
+    /// </summary>
+    /// <param name="lineP1">line segment start point</param>
+    /// <param name="lineP2">line segment end point</param>
+    /// <param name="point">point to get distance to</param>
+    /// <param name="closestPoint">set to either 1, 2, or 4, determining which end the point is closest to (p1, p2, or the middle)</param>
+    /// <returns></returns>
+    public static float DistanceToLineSqr(Vector3 lineP1, Vector3 lineP2, Vector3 point, out int closestPoint)
+    {
+        Vector3 v = lineP2 - lineP1;
+        Vector3 w = point - lineP1;
+
+        float c1 = Vector3.Dot(w, v);
+
+        if (c1 <= 0)
+        {//closest point is p1
+            closestPoint = 1;
+            return DistanceSqr(point, lineP1);
+        }
+
+        float c2 = Vector3.Dot(v, v);
+
+        if (c2 <= c1)
+        {//closest point is p2
+            closestPoint = 2;
+            return DistanceSqr(point, lineP2);
+        }
+
+        float b = c1 / c2;
+        Vector3 pb = lineP1 + b * v;
+
+        closestPoint = 4;
+        return DistanceSqr(point, pb);
+    }
+
+    /// <summary>
+    /// Get the angle in degrees between given forward axis to target position. WorldToLocal determines the
+    /// axis' space relative to given point.
+    /// If you want to create a rotation, use Quaternion.AngleAxis(angle, Vector3.up);
+    /// </summary>
+    public static float AngleForwardAxisDir(Matrix4x4 worldToLocal, Vector3 axis, Vector3 dir)
+    {
+        dir = worldToLocal.MultiplyVector(dir);
+        dir.y = 0.0f;
+
+        float s = CheckSideSign(new Vector2(dir.x, dir.z), new Vector2(axis.x, axis.z));
+
+        float angle = Vector3.Angle(axis, dir);
+
+        return s * angle;
+    }
+
+    /// <summary>
+    /// Get the angle in degrees between given forward axis to target position. WorldToLocal determines the
+    /// axis' space relative to given point.
+    /// If you want to create a rotation, use Quaternion.AngleAxis(angle, Vector3.up);
+    /// </summary>
+    public static float AngleForwardAxis(Matrix4x4 worldToLocal, Vector3 point, Vector3 axis, Vector3 target)
+    {
+        return AngleForwardAxisDir(worldToLocal, axis, target - point);
+    }
+
+    public static bool RotateToUp(Vector3 up, Vector3 right, Vector3 forward, ref Quaternion rotate)
+    {
+        Vector3 f = Vector3.Cross(up, right);
+        if (f == Vector3.zero)
+        {
+            Vector3 l = Vector3.Cross(up, forward);
+            f = Vector3.Cross(l, up);
+        }
+
+        if (f != Vector3.zero)
+        {
+            rotate = Quaternion.LookRotation(f, up);
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool VectorEqualApproximately(Vector3 lhs, Vector3 rhs)
+    {
+        return Mathf.Approximately(lhs.x, rhs.x) && Mathf.Approximately(lhs.y, rhs.y) && Mathf.Approximately(lhs.z, rhs.z);
+    }
+
+    /// <summary>
+    /// Compute the Barycentric (a,b,c) based on given p in relation to triangle (p0, p1, p2)
+    /// </summary>
+    public static Vector3 Barycentric(Vector3 p, Vector3 p0, Vector3 p1, Vector3 p2)
+    {
+        Vector3 v0 = p1 - p0, v1 = p2 - p0, v2 = p - p0;
+        float d00 = Vector3.Dot(v0, v0);
+        float d01 = Vector3.Dot(v0, v1);
+        float d11 = Vector3.Dot(v1, v1);
+        float d20 = Vector3.Dot(v2, v0);
+        float d21 = Vector3.Dot(v2, v1);
+        float denom = d00 * d11 - d01 * d01;
+        Vector3 ret;
+        ret.y = (d11 * d20 - d01 * d21) / denom;
+        ret.z = (d00 * d21 - d01 * d20) / denom;
+        ret.x = 1.0f - ret.y - ret.z;
+        return ret;
+    }
+
+    //-------------- Misc. --------------
+
+    /// <summary>
+    /// Greatest common factor.
+    /// </summary>
+    public static int Gcf(int a, int b)
+    {
+        while (b != 0)
+        {
+            int c = b;
+            b = a % b;
+            a = c;
+        }
+
+        return a;
+    }
+
+    /// <summary>
+    /// Least common multiple.
+    /// </summary>
+    public static int Lcm(int a, int b)
+    {
+        return (a / Gcf(a, b)) * b;
+    }
+}
+
+//-------------- Bounds --------------
+public struct BoundsUtil
+{
+    public static bool Intersect(Bounds b1, Bounds b2, out Bounds bOut)
+    {
+        bool ret = b1.Intersects(b2);
+        if (ret)
+        {
+            bOut = new Bounds();
+            bOut.SetMinMax(
+                Vector3.Max(b1.min, b2.min),
+                Vector3.Min(b1.max, b2.max));
+        }
+        else
+            bOut = b1;
+        return ret;
+    }
+}
+
+//-------------- Easing --------------
+
+public struct Easing
+{
+    public static float In(float t, float tMax, float start, float delta)
+    {
+        return start + delta * _in(t / tMax);
+    }
+
+    private static float _in(float r)
+    {
+        return r * r * r;
+    }
+
+    public static float Out(float t, float tMax, float start, float delta)
+    {
+        return start + delta * _out(t / tMax);
+    }
+
+    private static float _out(float r)
+    {
+        float ir = r - 1.0f;
+        return ir * ir * ir + 1.0f;
+    }
+
+    public static float OutElastic(float t, float tMax, float start, float delta)
+    {
+        return start + (delta * _outElastic(t / tMax));
+    }
+
+    private static float _outElastic(float ratio)
+    {
+        if (ratio == 0.0f || ratio == 1.0f) return ratio;
+
+        float p = 0.3f;
+        float s = p / 4.0f;
+        return -1.0f * Mathf.Pow(2.0f, -10.0f * ratio) * Mathf.Sin((ratio - s) * 2.0f * Mathf.PI / p) + 1.0f;
+    }
+
+    public static float InBounce(float t, float tMax, float start, float delta)
+    {
+        return start + (delta * _inBounce(t / tMax));
+    }
+
+    private static float _inBounce(float ratio)
+    {
+        return 1.0f - _outBounce(1.0f - ratio);
+    }
+
+    private static float _outBounce(float ratio)
+    {
+        float s = 7.5625f;
+        float p = 2.75f;
+        float l;
+        if (ratio < (1.0f / p))
+            l = s * Mathf.Pow(ratio, 2.0f);
+        else
+        {
+            if (ratio < (2.0f / p))
+            {
+                ratio = ratio - (1.5f / p);
+                l = s * Mathf.Pow(ratio, 2.0f) + 0.75f;
+            }
+            else
+            {
+                if (ratio < (2.5f / p))
+                {
+                    ratio = ratio - (2.25f / p);
+                    l = s * Mathf.Pow(ratio, 2.0f) + 0.9375f;
+                }
+                else
+                {
+                    ratio = ratio - (2.65f / p);
+                    l = s * Mathf.Pow(ratio, 2.0f) + 0.984375f;
+                }
+            }
+        }
+        return l;
+    }
+
+    public static float InElastic(float t, float tMax, float start, float delta)
+    {
+        return start + (delta * _inElastic(t / tMax));
+    }
+
+    private static float _inElastic(float ratio)
+    {
+        if (ratio == 0.0f || ratio == 1.0f) return ratio;
+
+        float p = 0.3f;
+        float s = p / 4.0f;
+        float invRatio = ratio - 1.0f;
+        return -1 * Mathf.Pow(2.0f, 10.0f * invRatio) * Mathf.Sin((invRatio - s) * 2.0f * Mathf.PI / p);
     }
 }
 
@@ -2663,6 +3220,18 @@ public static class RandomUtil
         }
     }
 
+    public static void ShuffleList<T>(List<T> list)
+    {
+        for (int i = 0, max = list.Count; i < max; i++)
+        {
+            int r = UnityEngine.Random.Range(i, max);
+            T obj = list[i];
+            T robj = list[r];
+            list[i] = robj;
+            list[r] = obj;
+        }
+    }
+
     /// <summary>
     /// Shuffle array of items.
     /// </summary>
@@ -3250,6 +3819,210 @@ public static class ColorUtil
             a = byte.Parse(hex.Substring(6, 2), System.Globalization.NumberStyles.HexNumber);
         }
         return new Color32(r, g, b, a);
+    }
+
+    public struct ColorHSB
+    {
+        public float h;
+        public float s;
+        public float b;
+        public float a;
+
+        public ColorHSB(float h, float s, float b, float a)
+        {
+            this.h = h;
+            this.s = s;
+            this.b = b;
+            this.a = a;
+        }
+
+        public ColorHSB(float h, float s, float b)
+        {
+            this.h = h;
+            this.s = s;
+            this.b = b;
+            this.a = 1f;
+        }
+
+        public ColorHSB(Color col)
+        {
+            ColorHSB temp = FromColor(col);
+            h = temp.h;
+            s = temp.s;
+            b = temp.b;
+            a = temp.a;
+        }
+
+        public static ColorHSB FromColor(Color color)
+        {
+            ColorHSB ret = new ColorHSB(0f, 0f, 0f, color.a);
+
+            float r = color.r;
+            float g = color.g;
+            float b = color.b;
+
+            float max = Mathf.Max(r, Mathf.Max(g, b));
+
+            if (max <= 0)
+            {
+                return ret;
+            }
+
+            float min = Mathf.Min(r, Mathf.Min(g, b));
+            float dif = max - min;
+
+            if (max > min)
+            {
+                if (g == max)
+                {
+                    ret.h = (b - r) / dif * 60f + 120f;
+                }
+                else if (b == max)
+                {
+                    ret.h = (r - g) / dif * 60f + 240f;
+                }
+                else if (b > g)
+                {
+                    ret.h = (g - b) / dif * 60f + 360f;
+                }
+                else
+                {
+                    ret.h = (g - b) / dif * 60f;
+                }
+                if (ret.h < 0)
+                {
+                    ret.h = ret.h + 360f;
+                }
+            }
+            else
+            {
+                ret.h = 0;
+            }
+
+            ret.h *= 1f / 360f;
+            ret.s = (dif / max) * 1f;
+            ret.b = max;
+
+            return ret;
+        }
+
+        public static Color ToColor(ColorHSB hsbColor)
+        {
+            float r = hsbColor.b;
+            float g = hsbColor.b;
+            float b = hsbColor.b;
+            if (hsbColor.s != 0)
+            {
+                float max = hsbColor.b;
+                float dif = hsbColor.b * hsbColor.s;
+                float min = hsbColor.b - dif;
+
+                float h = hsbColor.h * 360f;
+
+                if (h < 60f)
+                {
+                    r = max;
+                    g = h * dif / 60f + min;
+                    b = min;
+                }
+                else if (h < 120f)
+                {
+                    r = -(h - 120f) * dif / 60f + min;
+                    g = max;
+                    b = min;
+                }
+                else if (h < 180f)
+                {
+                    r = min;
+                    g = max;
+                    b = (h - 120f) * dif / 60f + min;
+                }
+                else if (h < 240f)
+                {
+                    r = min;
+                    g = -(h - 240f) * dif / 60f + min;
+                    b = max;
+                }
+                else if (h < 300f)
+                {
+                    r = (h - 240f) * dif / 60f + min;
+                    g = min;
+                    b = max;
+                }
+                else if (h <= 360f)
+                {
+                    r = max;
+                    g = min;
+                    b = -(h - 360f) * dif / 60 + min;
+                }
+                else
+                {
+                    r = 0;
+                    g = 0;
+                    b = 0;
+                }
+            }
+
+            return new Color(Mathf.Clamp01(r), Mathf.Clamp01(g), Mathf.Clamp01(b), hsbColor.a);
+        }
+
+        public Color ToColor()
+        {
+            return ToColor(this);
+        }
+
+        public override string ToString()
+        {
+            return "H:" + h + " S:" + s + " B:" + b;
+        }
+
+        public static ColorHSB Lerp(ColorHSB a, ColorHSB b, float t)
+        {
+            float h, s;
+
+            //check special case black (color.b==0): interpolate neither hue nor saturation!
+            //check special case grey (color.s==0): don't interpolate hue!
+            if (a.b == 0)
+            {
+                h = b.h;
+                s = b.s;
+            }
+            else if (b.b == 0)
+            {
+                h = a.h;
+                s = a.s;
+            }
+            else
+            {
+                if (a.s == 0)
+                {
+                    h = b.h;
+                }
+                else if (b.s == 0)
+                {
+                    h = a.h;
+                }
+                else
+                {
+                    // works around bug with LerpAngle
+                    float angle = Mathf.LerpAngle(a.h * 360f, b.h * 360f, t);
+                    while (angle < 0f)
+                        angle += 360f;
+                    while (angle > 360f)
+                        angle -= 360f;
+                    h = angle / 360f;
+                }
+                s = Mathf.Lerp(a.s, b.s, t);
+            }
+            return new ColorHSB(h, s, Mathf.Lerp(a.b, b.b, t), Mathf.Lerp(a.a, b.a, t));
+        }
+
+        public static string GetColorHSB(Color color)
+        {
+            ColorHSB colorHsb;
+            colorHsb = new ColorHSB(color);
+            return colorHsb.ToString();
+        }
     }
 }
 #endregion
@@ -4247,6 +5020,31 @@ public static class GameObjectExtension
         return selfObj;
     }
 
+    public static bool CheckLayerAndTag(GameObject go, int layerMask, string tag)
+    {
+        return (layerMask & (1 << go.layer)) != 0 && go.CompareTag(tag);
+    }
+
+    public static bool CheckTag(GameObject go, params string[] tags)
+    {
+        for (int i = 0; i < tags.Length; i++)
+        {
+            if (go.CompareTag(tags[i]))
+                return true;
+        }
+        return false;
+    }
+
+    public static bool CheckTag(Component comp, params string[] tags)
+    {
+        for (int i = 0; i < tags.Length; i++)
+        {
+            if (comp.CompareTag(tags[i]))
+                return true;
+        }
+        return false;
+    }
+
 }
 #endregion
 
@@ -4414,6 +5212,11 @@ public static class TransformExtensions
         transform.localEulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, z);
     }
 
+    /// <summary>
+    /// 增加X
+    /// </summary>
+    /// <param name="transform"></param>
+    /// <param name="dx"></param>
     public static void IncX(this Transform transform, float dx)
     {
         SetX(transform, transform.position.x + dx);
@@ -4453,6 +5256,8 @@ public static class TransformExtensions
             result[i] = transform.GetChild(i);
         return result;
     }
+
+   
 
     /// <summary>
     /// 移动本地坐标到某一坐标
@@ -4891,6 +5696,26 @@ public static class RectTransformExtensions
                 }
         }
     }
+
+    /// <summary>
+    /// 得到根目录canvas
+    /// </summary>
+    /// <param name="transform"></param>
+    /// <returns></returns>
+    public static Canvas GetRootCanvas(this Transform transform)
+    {
+        Canvas rootCanvas = null;
+        Transform parent = transform;
+        while (parent)
+        {
+            rootCanvas = parent.GetComponentInParent<Canvas>();
+            if (rootCanvas && !rootCanvas.isRootCanvas)
+                parent = parent.parent;
+            else
+                break;
+        }
+        return rootCanvas;
+    }
 }
 #endregion
 
@@ -5115,6 +5940,13 @@ public static class ComponentExtension
         return list.ToArray();
     }
 
+    /// <summary>
+    /// 找到父对象组件
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="t"></param>
+    /// <param name="inclusive"></param>
+    /// <returns></returns>
     public static T GetComponentInParentNotInCludSelf<T>(this Component component) where T : Component
     {
         Transform parent = component.transform.parent;
@@ -5125,6 +5957,28 @@ public static class ComponentExtension
                 return t;
         }
         return null;
+    }
+
+    /// <summary>
+    /// 找到父对象组件
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="t"></param>
+    /// <param name="inclusive"></param>
+    /// <returns></returns>
+    public static T GetComponentUpwards<T>(this Transform t, bool inclusive = false) where T : Component
+    {
+        T ret = null;
+
+        Transform parent = inclusive ? t : t.parent;
+        while (parent != null)
+        {
+            ret = parent.GetComponent<T>();
+            if (ret != null)
+                break;
+            parent = parent.parent;
+        }
+        return ret;
     }
 
     /// <summary>获取第一层子物体的组件(是否包括非激活的)</summary>
@@ -5141,6 +5995,36 @@ public static class ComponentExtension
                 components.Add(tComponent);
         }
         return components.ToArray();
+    }
+
+    /// <summary>
+    /// 获取子物体并排序
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="c"></param>
+    /// <param name="includeInactive"></param>
+    /// <returns></returns>
+    public static T[] GetComponentsInChildrenAlphaSort<T>(this Component c, bool includeInactive) where T : Component
+    {
+        T[] items = c.GetComponentsInChildren<T>(includeInactive);
+        Array.Sort<T>(items, GameTool.IndexSort);
+
+        return items;
+    }
+
+    /// <summary>
+    /// 获取子物体并排序
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="c"></param>
+    /// <param name="includeInactive"></param>
+    /// <returns></returns>
+    public static T[] GetComponentsInChildrenAlphaSort<T>(this GameObject go, bool includeInactive) where T : Component
+    {
+        T[] items = go.GetComponentsInChildren<T>(includeInactive);
+        Array.Sort<T>(items, GameTool.IndexSort);
+
+        return items;
     }
 
     public static Component SetParent(this Component component, Component parent)

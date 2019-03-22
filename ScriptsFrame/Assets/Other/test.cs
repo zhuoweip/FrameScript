@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Auxiliary;
 
 public class test : MonoBehaviour {
 
@@ -23,9 +24,16 @@ public class test : MonoBehaviour {
     private List<int> list2 = new List<int>();
     private int index;
 
+    private Color ff = Color.white;
+
+    private AuxUpdate anxUpdate;
+
 	// Use this for initialization
 	void Start () {
+        anxUpdate = AuxUpdate.Instance;
+        anxUpdate.callback += AA;
 
+        //Debug.LogError(ColorUtil.ColorHSB.GetColorHSB(new Color(0.4f, 1f, 0.84f, 1f)));
         //transform.IsChildOf(cc);
         //EventTriggerListener.Get(rImg).onClick = OnClick;
         //EventTriggerListener.Get(rImg, true, 0.2f).onDoubleClick = OnDoubleClick;
@@ -39,6 +47,11 @@ public class test : MonoBehaviour {
         //{
         //    Debug.Log(item);
         //}z
+    }
+
+    private void AA()
+    {
+        Debug.LogError(123);
     }
 
     private void GetFrameTexture()
@@ -136,7 +149,7 @@ public class test : MonoBehaviour {
 
     private void LateUpdate()
     {
-        sp.AlginScreen(dir, offset, Camera.main);
+        //sp.AlginScreen(dir, offset, Camera.main);
     }
 
     private void OnApplicationQuit()

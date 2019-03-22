@@ -21,8 +21,13 @@ public class test1 : MonoBehaviour {
 
     public dataTool dataTools = new dataTool();
 
+    private void _Update()
+    {
+        Debug.LogError(44444);
+    }
     void Start()
     {
+        Auxiliary.AuxUpdate.Instance.callback += _Update;
         //var stream1 = Observable.Start(() =>
         //{
         //    Thread.Sleep(4000);//4000毫秒

@@ -77,6 +77,23 @@ namespace UICore
 
         private bool isInit;
 
+        /// <summary>
+        /// 删除自身UI
+        /// </summary>
+        public void DestoryUI()
+        {
+            BaseUI currentUI = GetBaseUI(CurrentId);
+            Destroy(currentUI.gameObject);
+            RemoveUiId(CurrentId);
+
+            BaseUI parentUI = currentUI.transform.GetComponentUpwards<BaseUI>();
+            if (parentUI != null)
+            {
+                currentUI = parentUI;
+                CurrentId = parentUI.UiId;
+            }
+        }
+
         public void ShowUI(EUiId nextUiId, SceneTransType transType = SceneTransType.Null, Transform parent = null, string EventTypeName = null, params object[] param)
         {
             Resources.UnloadUnusedAssets();
@@ -101,7 +118,7 @@ namespace UICore
                 {
                     //父级baseUI
                     EUiId parentUiId = EUiId.NullUI;
-                    BaseUI parentUI = currentUI.GetComponentInParentNotInCludSelf<BaseUI>();
+                    BaseUI parentUI = currentUI.transform.GetComponentUpwards<BaseUI>();
                     if (parentUI != null)
                         parentUiId = parentUI.UiId;
 
