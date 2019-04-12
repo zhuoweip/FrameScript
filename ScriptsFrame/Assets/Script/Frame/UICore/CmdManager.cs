@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using CommandTerminal;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System;
 
 namespace UICore
 {
@@ -43,6 +45,105 @@ namespace UICore
                     Process.Start(@"C:\Windows\System32\osk.exe");
             }
             #endregion
+
+            #region Win10触摸键盘
+            if (Input.GetKeyDown(KeyCode.F3))
+            {
+                //先关闭再打开，这样可以关闭后台的进程，因为如果在外部点×直接把键盘关掉，进程一直存在，再次打开的话会打不开
+                HideTouchKeyboard();
+                ShowTouchKeyboard();
+            }
+            #endregion
+        }
+
+        [DllImport("user32")]
+        static extern IntPtr FindWindow(String sClassName, String sAppName);
+        [DllImport("user32")]
+        static extern bool PostMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
+        /// <summary>
+        /// 显示屏幕键盘
+        /// </summary>
+        public void ShowTouchKeyboard()
+        {
+            try
+            {
+                ExternalCall("C:\\Program Files\\Common Files\\Microsoft Shared\\ink\\tabtip.exe", null, false);
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.Log(e);
+            }
+        }
+        /// <summary>
+        /// 隐藏屏幕键盘
+        /// </summary>
+        public void HideTouchKeyboard()
+        {
+            try
+            {
+                uint WM_SYSCOMMAND = 274;
+                int SC_CLOSE = 61536;
+                IntPtr ptr = FindWindow("IPTip_Main_Window", null);
+                if (ptr == IntPtr.Zero)
+                    return;
+                PostMessage(ptr, WM_SYSCOMMAND, SC_CLOSE, 0);
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.Log(e);
+            }
+        }
+        private static Process ExternalCall(string filename, string arguments, bool hideWindow)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = filename;
+            startInfo.Arguments = arguments;
+            // if just command, we don't want to see the console displayed
+            if (hideWindow)
+            {
+                startInfo.RedirectStandardOutput = true;
+                startInfo.RedirectStandardError = true;
+                startInfo.UseShellExecute = false;
+                startInfo.CreateNoWindow = true;
+            }
+            Process process = new Process();
+            process.StartInfo = startInfo;
+            process.Start();
+            return process;
+        }
+
+        public const UInt32 WS_VISIBLE = 0X94000000;
+        /// <summary>
+        /// Specifies we wish to retrieve window styles.
+        /// </summary>
+        public const int GWL_STYLE = -16;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern UInt32 GetWindowLong(IntPtr hWnd, int nIndex);
+
+        /// <summary>
+        /// Gets the window handler for the virtual keyboard.
+        /// </summary>
+        /// <returns>The handle.</returns>
+        public static IntPtr GetKeyboardWindowHandle()
+        {
+            return FindWindow("IPTip_Main_Window", null);
+        }
+
+        /// <summary>
+        /// 检查触摸键盘是否可见
+        /// </summary>
+        /// <returns>True if visible.</returns>
+        public static bool IsKeyboardVisible()
+        {
+            IntPtr keyboardHandle = GetKeyboardWindowHandle();
+            bool visible = false;
+            if (keyboardHandle != IntPtr.Zero)
+            {
+                UInt32 style = GetWindowLong(keyboardHandle, GWL_STYLE);
+                visible = (style == WS_VISIBLE);
+            }
+            return visible;
         }
 
         protected override void OnGUI()
