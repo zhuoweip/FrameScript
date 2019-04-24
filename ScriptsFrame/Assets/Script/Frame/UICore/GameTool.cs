@@ -11,6 +11,8 @@ using System.Collections;
 using System.IO;
 using Random = UnityEngine.Random;
 using System.Threading;
+using UnityEngine.EventSystems;
+using UnityEngine.Events;
 
 #region GameTool
 public static class GameTool
@@ -3844,6 +3846,25 @@ public static class TextureUtil
         t2D.Apply();
         RenderTexture.active = null;
         return t2D;
+    }
+
+    /// <summary>
+    /// 白平衡 亮度
+    /// </summary>
+    /// <param name="sourceTex"></param>
+    /// <param name="strength"></param>
+    /// <returns></returns>
+    public static Texture2D SetTextureStrength(Texture2D sourceTex,float strength)
+    {
+        Color[] cs = sourceTex.GetPixels();
+        Color[] cs2 = new Color[cs.Length];
+        for (int i = 0; i < cs.Length; i++)
+            cs2[i] = cs[i] * Mathf.Pow(2, strength / 2);
+
+        Texture2D t = new Texture2D(sourceTex.width, sourceTex.height);
+        t.SetPixels(cs2);
+        t.Apply();
+        return t;
     }
 
     /// <summary>

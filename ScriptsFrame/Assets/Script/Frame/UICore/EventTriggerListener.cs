@@ -1,9 +1,8 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using JacobGames.SuperInvoke;
+using UnityEngine;
 using UnityEngine.EventSystems;
-using JacobGames.SuperInvoke;
 
-public class EventTriggerListener : UnityEngine.EventSystems.EventTrigger
+public class EventTriggerListener : EventTrigger
 {
     public delegate void EventDataDelegate(GameObject go, PointerEventData eventData);
     public EventDataDelegate onDragEventData;

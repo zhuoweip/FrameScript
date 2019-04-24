@@ -11,7 +11,7 @@ public class test2 : MonoBehaviour {
     private void Start()
     {
         //o1.LocalMove(o4);
-        rImg.texture = TextureUtil.SetTexture(tex, type);
+        rImg.texture = TextureUtil.SetTextureStrength(tex, -1);
         rImg.SetNativeSize();  
     }
 
