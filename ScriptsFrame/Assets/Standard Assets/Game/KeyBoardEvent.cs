@@ -131,7 +131,7 @@ public class KeyBoardEvent
     public static void ClickFNum(byte num)
     {
         keybd_event(num, 0, 0, 0);
-        keybd_event(num, 0, 1, 0);
+        //keybd_event(num, 0, 1, 0);//关闭这个不然会调用2次
         keybd_event(num, 0, 2, 0);
     }
 
