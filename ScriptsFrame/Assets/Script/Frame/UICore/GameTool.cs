@@ -5501,6 +5501,18 @@ public sealed class TimeUtil
         return Leap_Common_Year.Common_Year;
     }
 
+    /// <summary>
+    /// 获取00分00秒00毫秒 用于精准倒计时
+    /// </summary>
+    public static string GetTimeMMSSMM(float leftTime)
+    {
+        int d = (int)(leftTime * 100.0f);
+        int minutes = d / (60 * 100);
+        int seconds = (d % (60 * 100)) / 100;
+        int hundredths = d % 100;
+        return String.Format("{0:00}:{1:00}.{2:00}", minutes, seconds, hundredths);
+    }
+
     /// <summary>获取 0天00时00分</summary>
     public static string GetTimeDdHhmmss2(int leftTime)
     {
