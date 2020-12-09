@@ -626,6 +626,92 @@ public sealed class FuncUtil
 }
 #endregion
 
+#region 文件拓展
+public enum DeletType
+{
+    Video,
+    Image,
+}
+
+public static class DirectoryUtil
+{
+    /// <summary>
+    /// 删除视频
+    /// </summary>
+    /// <param name="folder"></param>
+    public static void DeleteFileByType(DirectoryInfo folder,DeletType deletType)
+    {
+        if (folder.Exists)
+        {
+            FileSystemInfo[] fileinfo = folder.GetFileSystemInfos();
+            foreach (FileSystemInfo item in fileinfo)
+            {
+                if (item is DirectoryInfo)
+                {
+                    DeleteFileByType((DirectoryInfo)item, deletType);
+                }
+                else
+                {
+                    switch (deletType)
+                    {
+                        case DeletType.Video:
+                            if (item.Name.EndsWith(".mp4") || item.Name.EndsWith(".mkv"))
+                            {
+                                try
+                                {
+                                    item.Delete();
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.LogError(e.Message);
+                                }
+                            }
+                            break;
+                        case DeletType.Image:
+                            if (item.Name.EndsWith("*.png") || item.Name.EndsWith(".jpg"))
+                            {
+                                try
+                                {
+                                    item.Delete();
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.LogError(e.Message);
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    
+                }
+            }
+        }
+    }
+
+    public static void DeleteFileByType2(DirectoryInfo folder, DeletType deletType)
+    {
+        switch (deletType)
+        {
+            case DeletType.Video:
+                foreach (FileInfo file in folder.GetFiles("*.mp4"))
+                    file.Delete();
+                foreach (FileInfo file in folder.GetFiles("*.mkv"))
+                    file.Delete();
+                break;
+            case DeletType.Image:
+                foreach (FileInfo file in folder.GetFiles("*.png"))
+                    file.Delete();
+                foreach (FileInfo file in folder.GetFiles("*.jpg"))
+                    file.Delete();
+                break;
+            default:
+                break;
+        }
+    }
+}
+#endregion
+
 #region Component拓展
 public static class ComponentUtil
 {
@@ -3904,6 +3990,105 @@ public static class TextureUtil
         return renderTexture;
     }
 
+    /// <summary>
+    /// 压缩图片
+    /// </summary>
+    /// <param name="tex"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <returns></returns>
+    public static Texture2D ReSetTextureSize(Texture2D tex, int width, int height)
+    {
+        var rendTex = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
+        rendTex.Create();
+        Graphics.SetRenderTarget(rendTex);
+        GL.PushMatrix();
+        GL.Clear(true, true, Color.clear);
+        GL.PopMatrix();
+        var mat = new Material(Shader.Find("Unlit/Transparent"));
+        mat.mainTexture = tex;
+        Graphics.SetRenderTarget(rendTex);
+        GL.PushMatrix();
+        GL.LoadOrtho();
+        mat.SetPass(0);
+        GL.Begin(GL.QUADS);
+        GL.TexCoord2(0, 0);
+        GL.Vertex3(0, 0, 0);
+        GL.TexCoord2(0, 1);
+        GL.Vertex3(0, 1, 0);
+        GL.TexCoord2(1, 1);
+        GL.Vertex3(1, 1, 0);
+        GL.TexCoord2(1, 0);
+        GL.Vertex3(1, 0, 0);
+        GL.End();
+        GL.PopMatrix();
+        var finalTex = new Texture2D(rendTex.width, rendTex.height, TextureFormat.ARGB32, false);
+        RenderTexture.active = rendTex;
+        finalTex.ReadPixels(new Rect(0, 0, finalTex.width, finalTex.height), 0, 0);
+        finalTex.Apply();
+        return finalTex;
+    }
+
+    public static Texture2D RotateTexture(Texture2D rotatedTexture, Texture2D originalTexture, bool clockwise)
+    {
+        Color32[] original = originalTexture.GetPixels32();
+        Color32[] rotated = new Color32[original.Length];
+        int w = originalTexture.width;
+        int h = originalTexture.height;
+
+        int iRotated, iOriginal;
+
+        for (int j = 0; j < h; ++j)
+        {
+            for (int i = 0; i < w; ++i)
+            {
+                iRotated = (i + 1) * h - j - 1;
+                iOriginal = clockwise ? original.Length - 1 - (j * w + i) : j * w + i;
+                rotated[iRotated] = original[iOriginal];
+            }
+        }
+
+        UnityEngine.Object.Destroy(rotatedTexture);
+        rotatedTexture = null;
+        rotatedTexture = new Texture2D(h, w);
+        rotatedTexture.SetPixels32(rotated);
+        rotatedTexture.Apply();
+        return rotatedTexture;
+    }
+
+    public static Texture2D RotateTexture(Texture2D rotatedTexture, Texture2D texture, float eulerAngles)
+    {
+        float phi = eulerAngles / (180 / Mathf.PI);
+        float sn = Mathf.Sin(phi);
+        float cs = Mathf.Cos(phi);
+        Color32[] arr = texture.GetPixels32();
+        Color32[] arr2 = new Color32[arr.Length];
+        int W = texture.width;
+        int H = texture.height;
+        int xc = W / 2;
+        int yc = H / 2;
+        for (int j = 0; j < H; j++)
+        {
+            for (int i = 0; i < W; i++)
+            {
+                arr2[j * W + i] = new Color32(0, 0, 0, 0);
+                int x = (int)(cs * (i - xc) + sn * (j - yc) + xc);
+                int y = (int)(-sn * (i - xc) + cs * (j - yc) + yc);
+                if ((x > -1) && (x < W) && (y > -1) && (y < H))
+                {
+                    arr2[j * W + i] = arr[y * W + x];
+                }
+            }
+        }
+
+        UnityEngine.Object.Destroy(rotatedTexture);
+        rotatedTexture = null;
+        rotatedTexture = new Texture2D(W, H);
+        rotatedTexture.SetPixels32(arr2);
+        rotatedTexture.Apply();
+        return rotatedTexture;
+    }
+
     public class ThreadData
     {
         public int start;
@@ -4366,6 +4551,43 @@ public static class TextureUtil
 }
 #endregion
 
+#region Text拓展
+
+public static class TextUtil
+{
+    public static void FileAdd(string Path, string strings)
+    {
+        StreamWriter sw = File.AppendText(Path);
+        sw.Write(strings);
+        sw.Flush();
+        sw.Close();
+        sw.Dispose();
+    }
+
+    public static List<string> ReadFileList(string file_path)
+    {
+        StreamReader sr;
+        if (File.Exists(file_path))
+        {
+            sr = File.OpenText(file_path);
+        }
+        else
+        {
+            Debug.LogWarning("Not find files!");
+            return null;
+        }
+        List<string> list = new List<string>();
+        string str;
+        while ((str = sr.ReadLine()) != null)
+            list.Add(str);//加上str的临时变量是为了避免sr.ReadLine()在一次循环内执行两次  
+        sr.Close();
+        sr.Dispose();
+        return list;
+    }
+}
+
+#endregion
+
 #region 颜色拓展
 /// <summary>文字颜色</summary>
 public enum STRING_COLOR
@@ -4399,6 +4621,118 @@ public static class ColorUtil
     public static Color SetA(this Color color, float a)
     {
         return new Color(color.r, color.g, color.b, a);
+    }
+
+    public struct HsvColor
+    {
+        /// The Hue, ranges between 0 and 360
+        public double H;
+
+        /// The saturation, ranges between 0 and 1
+        public double S;
+
+        /// The value (brightness), ranges between 0 and 1
+        public double V;
+
+        public float normalizedH
+        {
+            get { return (float)H / 360f; }
+
+            set { H = (double)value * 360; }
+        }
+
+        public float normalizedS
+        {
+            get { return (float)S; }
+            set { S = (double)value; }
+        }
+
+        public float normalizedV
+        {
+            get { return (float)V; }
+            set { V = (double)value; }
+        }
+
+        public HsvColor(double h, double s, double v)
+        {
+            this.H = h;
+            this.S = s;
+            this.V = v;
+        }
+
+        public override string ToString()
+        {
+            return "{" + H.ToString("f2") + "," + S.ToString("f2") + "," + V.ToString("f2") + "}";
+        }
+    }
+
+    /// <summary>
+    /// RGB->HSV
+    /// </summary>
+    /// <param name="color"></param>
+    /// <returns></returns>
+    public static HsvColor ConvertRgbToHsv(Color color)
+    {
+        return ConvertRgbToHsv(Mathf.RoundToInt((color.r * 255)), Mathf.RoundToInt((int)(color.g * 255)), Mathf.RoundToInt((int)(color.b * 255)));
+    }
+
+    /// <summary>
+    /// RGB->HSV
+    /// </summary>
+    /// <param name="r"></param>
+    /// <param name="b"></param>
+    /// <param name="g"></param>
+    /// <returns></returns>
+    //Converts an RGB color to an HSV color.
+    public static HsvColor ConvertRgbToHsv(double r, double b, double g)
+    {
+        double delta, min;
+        double h = 0, s, v;
+
+        min = Math.Min(Math.Min(r, g), b);
+        v = Math.Max(Math.Max(r, g), b);
+        delta = v - min;
+
+        if (v == 0.0)
+            s = 0;
+        else
+            s = delta / v;
+
+        if (s == 0)
+            h = 360;
+        else
+        {
+            if (r == v)
+                h = (g - b) / delta;
+            else if (g == v)
+                h = 2 + (b - r) / delta;
+            else if (b == v)
+                h = 4 + (r - g) / delta;
+
+            h *= 60;
+            if (h <= 0.0)
+                h += 360;
+        }
+
+        HsvColor hsvColor = new HsvColor();
+        hsvColor.H = 360 - h;
+        hsvColor.S = s * 255;
+        hsvColor.V = v;
+        return hsvColor;
+    }
+
+    /// <summary>
+    /// 是否在绿色区间
+    /// </summary>
+    /// <param name="hsvColor"></param>
+    /// <returns></returns>
+    public static bool IsGreen(HsvColor hsvColor)
+    {
+        if (hsvColor.H > 100 && hsvColor.H < 160 && hsvColor.S > 20 && hsvColor.S <= 255 && hsvColor.V > 20 && hsvColor.V <= 255)
+        {
+            return true;
+        }
+        return false;
     }
 
     public static string SetStringColor(string str, STRING_COLOR strColor)
@@ -4772,6 +5106,65 @@ public static class ColorUtil
 #region 字符串拓展
 public static class StringUtil
 {
+    public static string ToUft8(string unicodeString)
+    {
+        UTF8Encoding utf8 = new UTF8Encoding();
+        return utf8.GetString(utf8.GetBytes(unicodeString));
+    }
+
+    public static string ToGb321(string str)
+    {
+        //这边我以big5转换gb2312为例
+        Encoding big5 = Encoding.GetEncoding("big5");
+        Encoding gb2312 = Encoding.GetEncoding("gb2312");
+        byte[] big5b = big5.GetBytes("編程無悔！");
+        //关键也就是这句了
+        byte[] gb2312b = Encoding.Convert(big5, gb2312, big5b);
+        string strGb2312 = gb2312.GetString(gb2312b);
+        return strGb2312;
+    }
+
+    /// <summary>
+    /// 裁取指定长度字符串，多的用.表示
+    /// </summary>
+    /// <param name="str"></param>
+    /// <param name="len"></param>
+    /// <returns></returns>
+    public static string CutByteString(string str, int len)
+    {
+        string result = string.Empty;// 最终返回的结果
+        if (string.IsNullOrEmpty(str)) { return result; }
+        int byteLen = System.Text.Encoding.Default.GetByteCount(str);// 单字节字符长度
+        int charLen = str.Length;// 把字符平等对待时的字符串长度
+        int byteCount = 0;// 记录读取进度
+        int pos = 0;// 记录截取位置
+        if (byteLen > len)
+        {
+            for (int i = 0; i < charLen; i++)
+            {
+                if (Convert.ToInt32(str.ToCharArray()[i]) > 255)// 按中文字符计算加2
+                { byteCount += 2; }
+                else// 按英文字符计算加1
+                { byteCount += 1; }
+                if (byteCount > len)// 超出时只记下上一个有效位置
+                {
+                    pos = i;
+                    break;
+                }
+                else if (byteCount == len)// 记下当前位置
+                {
+                    pos = i + 1;
+                    break;
+                }
+            }
+            if (pos >= 0)
+            { result = str.Substring(0, pos) + "..."; }
+        }
+        else
+        { result = str; }
+        return result;
+    }
+
     /// <summary>
     /// 获取字符串所表达的函数名
     /// </summary>
