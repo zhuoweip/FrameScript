@@ -107,7 +107,7 @@ namespace Jacovone
 		/// The path magic logo. Loaded from resources.
 		/// </summary>
 		private Texture2D pathMagicLogo = null;
-        
+
 		/// <summary>
 		/// Raises the enable event.
 		/// </summary>
@@ -124,7 +124,7 @@ namespace Jacovone
 		{
 			CreatePathEditorWindow window = (CreatePathEditorWindow)EditorWindow.GetWindow (typeof(CreatePathEditorWindow));
 
-#if UNITY_5_3 || UNITY_5_1 || UNITY_5_2
+#if UNITY_5_3_OR_NEWER || UNITY_5_1 || UNITY_5_2
 			window.titleContent = new GUIContent ("Template path");
 #else
 			window.title = "Template path";

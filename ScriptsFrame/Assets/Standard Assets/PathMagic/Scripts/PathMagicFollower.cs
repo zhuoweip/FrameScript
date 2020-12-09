@@ -369,6 +369,12 @@ namespace Jacovone.CameraTools
 			float velocity = 1.0f;
 			int waypoint = 0;
 
+			if (pos < 0)
+			if (Path.loop)
+				pos = 1 + pos;
+			else
+				pos = 0;
+			
 			if (Path.presampledPath) {
 				Path.sampledPositionAndRotationAndVelocityAndWaypointAtPos (pos, out position, out rotation, out velocity, out waypoint);
 			} else {

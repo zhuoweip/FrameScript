@@ -22,7 +22,8 @@ namespace Jacovone
 		/// <summary>
 		/// Type of interpolation from a velocity to a new one
 		/// </summary>
-		public enum VelocityVariation {
+		public enum VelocityVariation
+		{
 			Slow,
 			Medium,
 			Fast
@@ -45,7 +46,7 @@ namespace Jacovone
 		}
 
 		/// <summary>
-		/// The waypoint position.
+		/// The waypoint position. Do not use this field directly, instead use related property.
 		/// </summary>
 		public Vector3
 			position;
@@ -62,9 +63,9 @@ namespace Jacovone
 				position = value;
 			}
 		}
-	
+
 		/// <summary>
-		/// The rotation in euler angles.
+		/// The rotation in euler angles. Do not use this field directly, instead use related property.
 		/// </summary>
 		public Vector3
 			rotation;
@@ -82,9 +83,10 @@ namespace Jacovone
 				rotation = value;
 			}
 		}
-	
+
 		/// <summary>
-		/// If this is defined, the rotation at this waypoint is computed to face the target.
+		/// If this is defined, the rotation at this waypoint is computed to face the target. 
+		/// Do not use this field directly, instead use related property.
 		/// </summary>
 		public Transform
 			lookAt;
@@ -101,9 +103,9 @@ namespace Jacovone
 				lookAt = value;
 			}
 		}
-	
+
 		/// <summary>
-		/// The input bezier tangent.
+		/// The input bezier tangent. Do not use this field directly, instead use related property.
 		/// </summary>
 		public Vector3
 			inTangent;
@@ -118,11 +120,13 @@ namespace Jacovone
 			}
 			set {
 				inTangent = value;
+				if (symmetricTangents)
+					outTangent = -inTangent;
 			}
 		}
-	
+
 		/// <summary>
-		/// The output bezier tangent.
+		/// The output bezier tangent. Do not use this field directly, instead use related property.
 		/// </summary>
 		public Vector3
 			outTangent;
@@ -137,11 +141,13 @@ namespace Jacovone
 			}
 			set {
 				outTangent = value;
+				if (symmetricTangents)
+					inTangent = -outTangent;
 			}
 		}
 
 		/// <summary>
-		/// The in and out tangents are symmetric?.
+		/// The in and out tangents are symmetric?. Do not use this field directly, instead use related property.
 		/// </summary>
 		public bool symmetricTangents;
 
@@ -157,15 +163,16 @@ namespace Jacovone
 				symmetricTangents = value;
 			}
 		}
-	
+
 		/// <summary>
-		/// The waypoint velocity.
+		/// The waypoint velocity. Do not use this field directly, instead use related property.
 		/// </summary>
 		public float
 			velocity;
 
 		/// <summary>
 		/// The in variation. The velocity at which interpolator reaches the waypoint velocity.
+		/// Do not use this field directly, instead use related property.
 		/// </summary>
 		public VelocityVariation inVariation;
 
@@ -184,9 +191,10 @@ namespace Jacovone
 
 		/// <summary>
 		/// The out variation. The velocity at which interpolator leaves the waypoint velocity.
+		/// Do not use this field directly, instead use related property.
 		/// </summary>
 		public VelocityVariation outVariation;
-		
+
 		/// <summary>
 		/// Gets or sets the out variation. The velocity at which interpolator leaves the waypoint velocity.
 		/// </summary>
@@ -215,6 +223,7 @@ namespace Jacovone
 
 		/// <summary>
 		/// The reached event. Fired when the current pos traverses this waypoint.
+		/// Do not use this field directly, instead use related property.
 		/// </summary>
 		public ReachedEvent reached;
 

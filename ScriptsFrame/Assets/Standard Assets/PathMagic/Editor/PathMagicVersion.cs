@@ -21,7 +21,7 @@ namespace Jacovone
 		/// <summary>
 		/// The revision version number.
 		/// </summary>
-		public static int revisionVersion = 2;
+		public static int revisionVersion = 6;
 
 		/// <summary>
 		/// Gets the complete version string.

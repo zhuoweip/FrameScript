@@ -1,5 +1,27 @@
 RELEASE NOTES
 
+1.2.5
+	Improvements
+		- Bake animation utility
+		- Disable Position option
+		- Mark waypoint as a different color if has attached events
+		- 2017.x compatibility
+	Fixes
+		- First waypoint now fire reached event at start
+		- Some minor fixes
+
+1.2.4
+	Improvements
+		- Use CTRL/CMD + left mouse click create a new waypoint over a collider for a given PathMagic
+		- Some (experimental) mesh creation: Torus and Road
+	Changes
+		- Some minor fixes
+
+1.2.3
+	Improvements
+		- Manual set of waypoint tangents
+		- New PathMagicJoint component
+		- Small editor enhancements
 1.2.2
 	Improvements
 		- New "Disable Orientation" flag in PathMagic and PathMagicAnimator
