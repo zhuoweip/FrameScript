@@ -3934,6 +3934,64 @@ public static class TextureUtil
         return t2D;
     }
 
+    public static Texture2D GetTex2DByRenderTexture(RenderTexture rt, Rect rect)
+    {
+        if (rt == null) return null;
+        Texture2D t2D = new Texture2D((int)rect.width, (int)rect.height, TextureFormat.ARGB32, false);
+        RenderTexture.active = rt;
+        t2D.ReadPixels(new Rect(rect.x, rect.y, rect.width, rect.height), 0, 0);
+        t2D.Apply();
+        RenderTexture.active = null;
+        return t2D;
+    }
+
+    public static Texture2D GetTex2DByRenderTexture(RenderTexture rt, float left, float top, int width, int height)
+    {
+        if (rt == null) return null;
+        Texture2D t2D = new Texture2D(width, height, TextureFormat.ARGB32, false);
+        RenderTexture.active = rt;
+        t2D.ReadPixels(new Rect(left, top, width, height), 0, 0);
+        t2D.Apply();
+        RenderTexture.active = null;
+        return t2D;
+    }
+
+    /// <summary>
+    /// Texture 转 Texture2D
+    /// </summary>
+    /// <param name="tex"></param>
+    /// <param name="left"></param>
+    /// <param name="top"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <returns></returns>
+    public static Texture2D GetTex2DByTexture(Texture tex, float left, float top, int width, int height)
+    {
+        if (tex == null) return null;
+        if (tex as Texture2D)
+        {
+            Debug.LogError("tex is Texture2D");
+            Texture2D texture2D = tex as Texture2D;
+            Texture2D t2D = new Texture2D(width, height, TextureFormat.ARGB32, false);
+            var colors = texture2D.GetPixels((int)left, (int)top, width, height);
+            t2D.SetPixels(0, 0, width, height, colors);
+            t2D.Apply();
+            return t2D;
+        }
+        else if (tex as RenderTexture)
+        {
+            Debug.LogError("tex is RenderTexture");
+            RenderTexture rt = tex as RenderTexture;
+            Texture2D t2D = new Texture2D(width, height, TextureFormat.ARGB32, false);
+            RenderTexture.active = rt;
+            t2D.ReadPixels(new Rect(left, top, width, height), 0, 0);
+            t2D.Apply();
+            RenderTexture.active = null;
+            return t2D;
+        }
+        return null;
+    }
+
     /// <summary>
     /// 白平衡 亮度
     /// </summary>
@@ -4088,6 +4146,8 @@ public static class TextureUtil
         rotatedTexture.Apply();
         return rotatedTexture;
     }
+
+
 
     public class ThreadData
     {
