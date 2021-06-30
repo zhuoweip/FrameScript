@@ -3860,11 +3860,11 @@ public enum PsType
 
 public static class TextureUtil
 {
-    /// <summary>Texture2D转Sprite</summary>
-    public static Sprite Texture2DToSprite(Texture2D tex)
+    /// <summary>Texture2D转Sprite,Vector2.one * 0.5f表示中心点在正中间,Vector2.zero表示中心点在左上角</summary>
+    public static Sprite Texture2DToSprite(Texture2D tex, Vector2 pviot)
     {
         if (tex == null) { Debug.LogError("tex为空"); return null; }
-        Sprite spr = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.zero);
+        Sprite spr = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), pviot);
         return spr;
     }
 
@@ -3998,7 +3998,7 @@ public static class TextureUtil
     /// <param name="sourceTex"></param>
     /// <param name="strength"></param>
     /// <returns></returns>
-    public static Texture2D SetTextureStrength(Texture2D sourceTex,float strength)
+    public static Texture2D SetTextureStrength(Texture2D sourceTex, float strength)
     {
         Color[] cs = sourceTex.GetPixels();
         Color[] cs2 = new Color[cs.Length];
@@ -4023,7 +4023,7 @@ public static class TextureUtil
     /// 截取全屏   
     /// StartCoroutine(TextureUtil.GetScreenTexture(0, 0, Screen.width, Screen.height, null));
     /// </returns>
-    public static IEnumerator GetScreenTexture(float x,float y,int width,int height,Texture tex)
+    public static IEnumerator GetScreenTexture(float x, float y, int width, int height, Texture tex)
     {
         yield return Yielders.EndOfFrame;
         Texture2D t = new Texture2D(width, height, TextureFormat.RGB24, false);
@@ -4311,6 +4311,22 @@ public static class TextureUtil
         return tex;
     }
 
+    public static Texture2D GetTexture2D(string address)
+    {
+        using (FileStream stream = File.Open(address, FileMode.Open, FileAccess.Read))
+        {
+            stream.Seek(0, SeekOrigin.Begin);
+            byte[] bytes = new byte[stream.Length];
+            stream.Read(bytes, 0, (int)stream.Length);
+            System.Drawing.Image image = System.Drawing.Image.FromStream(stream);
+            int width = image.Width;
+            int height = image.Height;
+            Texture2D texture = new Texture2D(width, height, TextureFormat.RGB24, false);
+            texture.LoadImage(bytes);
+            return texture;
+        }
+    }
+
     // Save ScreenShot
     public static IEnumerator SaveScreenShot(string path, Rect rect, Vector2 size = default(Vector2))
     {
@@ -4338,7 +4354,7 @@ public static class TextureUtil
         return new Texture2D(tex.width, tex.height, tex.format, false);
     }
 
-    public static Texture2D SetTexture(Texture2D tex,PsType psType)
+    public static Texture2D SetTexture(Texture2D tex, PsType psType)
     {
         Texture2D psTex = new Texture2D(tex.width, tex.height);
         switch (psType)
@@ -4607,6 +4623,37 @@ public static class TextureUtil
 
         t.Apply();
         return t;
+    }
+
+    /// <summary>
+    /// bitmap转texture2d
+    /// </summary>
+    /// <param name="bitmap"></param>
+    /// <returns></returns>
+    public static Texture2D BitmapToTex2D(System.Drawing.Bitmap bitmap)
+    {
+        Texture2D tex2d = new Texture2D(bitmap.Width, bitmap.Height);
+        MemoryStream ms = new MemoryStream();
+        bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+        byte[] buffer = ms.GetBuffer();
+        ms.Close();
+        ms.Dispose();
+        tex2d.LoadImage(buffer);
+        return tex2d;
+    }
+
+    /// <summary>
+    /// texture2d转bitmap
+    /// </summary>
+    /// <param name="texture2D"></param>
+    /// <param name="path"></param>
+    /// <param name="isJpg"></param>
+    /// <returns></returns>
+    public static System.Drawing.Bitmap Tex2DToBitmap(Texture2D texture2D,string path,bool isJpg = true)
+    {
+        File.WriteAllBytes(path, isJpg ? texture2D.EncodeToJPG() : texture2D.EncodeToPNG());
+        System.Drawing.Bitmap newImg = new System.Drawing.Bitmap(System.Drawing.Image.FromFile(path));
+        return newImg;
     }
 }
 #endregion
