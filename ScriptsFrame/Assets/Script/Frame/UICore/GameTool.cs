@@ -393,6 +393,21 @@ public static class GameTool
     }
 
     /// <summary>
+    /// 世界坐标转UGUI坐标，这个是转WorldSpace模式下的坐标，这个rectTransform是Canvas的rectTransform,camera是渲染3d物体的camera
+    /// </summary>
+    /// <param name="rectTransform"></param>
+    /// <param name="worldPos"></param>
+    /// <param name="camera"></param>
+    /// <returns></returns>
+    public static Vector2 World2UGUI_WorldSpacePos(RectTransform rectTransform, Vector3 worldPos, Camera camera)
+    {
+        Vector2 pos;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, camera.WorldToScreenPoint(worldPos),
+            camera, out pos);
+        return pos;
+    }
+
+    /// <summary>
     /// 世界坐标转UGUI坐标 坐标转换 RenderMode.Overlay
     /// </summary>
     /// <param name="worldObj"></param>
