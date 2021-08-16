@@ -7277,6 +7277,17 @@ public static class ComponentExtension
     }
 
     /// <summary>
+    /// 获取所有子物体不包含当前物体
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="component"></param>
+    /// <returns></returns>
+    public static T[] GetComponentsInChildrenNotInCludSelf<T>(this Component component) where T : Component
+    {
+        return component.GetComponentsInChildren<T>(true).Where(x => x.transform != component.transform).ToArray();
+    }
+
+    /// <summary>
     /// 找到父对象组件
     /// </summary>
     /// <typeparam name="T"></typeparam>
